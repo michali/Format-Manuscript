@@ -110,6 +110,6 @@ $outputFile = (((Split-Path $inputDir -Leaf) -replace "\.\\", "") -replace "\\",
 
 Write-Host "Writing file to $outputDir\$outputFile"
 
-& 'pandoc' $files --top-level-division=chapter --reference-doc=$inputDir\..\custom-reference.docx -o $outputDir\$outputFile
+.\Invoke-Pandoc.ps1 -referenceDocPath "$InputDir\..\custom-reference.docx" -files $files -outputFilePath "$outputDir\$outputFile"
 
 Remove-Item $tempDir -Recurse

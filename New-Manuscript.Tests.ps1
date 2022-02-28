@@ -2,7 +2,6 @@ Describe 'New-Manuscript' {
 
     BeforeAll {
         Mock -CommandName "Test-Path" -ParameterFilter { $Path -eq $inputDir} -MockWith { return $true }
-        Mock pandoc { Write-Warning "Calling Pandoc"}
     }
 
     Context "When the output dir doesn't exist" {
