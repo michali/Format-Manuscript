@@ -1,4 +1,3 @@
-. .\Invoke-Pandoc.ps1
 . .\lib.ps1
 
 Describe 'New-Manuscript' {
@@ -8,6 +7,8 @@ Describe 'New-Manuscript' {
 
         function Invoke-Pandoc {}
         Mock Invoke-Pandoc -MockWith {}
+
+        Mock New-Item
     }
 
     Context "When the output dir doesn't exist" {
@@ -18,9 +19,9 @@ Describe 'New-Manuscript' {
         Mock -CommandName New-Item -ParameterFilter { $ItemType -eq "Directory" -and $Path -eq $outputDir }
 
         New-Manuscript $inputDir
-    }
 
-    It "Creates an output dir if it isn't there" {
-       Assert-MockCalled -CommandName 'New-Item'
-    }
+        It "Creates an output dir if it isn't there" {
+            Assert-MockCalled New-Item -ParameterFilter { $ItemType -eq "Directory" -and $Path -eq $outputDir }
+         }
+    }   
 }
