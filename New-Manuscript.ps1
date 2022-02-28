@@ -4,11 +4,14 @@ param(
     [switch]$Tag
     )
 
+. .\Invoke-Pandoc.ps1
+
 $InputDir = $InputDir.TrimEnd('\');
 $outputDir = "$InputDir\out"
 $tempDir = "$outputDir\temp"
 $manuscriptDir = "$InputDir\_Manuscript"
 $separatorFilePath = "$InputDir\..\Templates\Scene separator.md"
+
 
 If (!(Test-Path $inputDir))
 {
@@ -110,6 +113,6 @@ $outputFile = (((Split-Path $inputDir -Leaf) -replace "\.\\", "") -replace "\\",
 
 Write-Host "Writing file to $outputDir\$outputFile"
 
-.\Invoke-Pandoc.ps1 -referenceDocPath "$InputDir\..\custom-reference.docx" -files $files -outputFilePath "$outputDir\$outputFile"
+Invoke-Pandoc -referenceDocPath "$InputDir\..\custom-reference.docx" -files $files -outputFilePath "$outputDir\$outputFile"
 
 Remove-Item $tempDir -Recurse
