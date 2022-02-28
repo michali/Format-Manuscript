@@ -3,10 +3,12 @@ param(
     [string]$InputDir, 
     [switch]$Tag
     )
-$outputDir = '.\out'
-$tempDir = '\temp'
-$manuscriptDir = '.\_Manuscript'
-$separatorFilePath = "`".\Templates\Scene separator.md`""
+
+$InputDir = $InputDir.TrimEnd('\');
+$outputDir = "$InputDir\out"
+$tempDir = "$outputDir\temp"
+$manuscriptDir = "$InputDir\_Manuscript"
+$separatorFilePath = "$InputDir\..\Templates\Scene separator.md"
 
 If (!(Test-Path $inputDir))
 {
@@ -19,9 +21,9 @@ If (!(Test-Path $outputDir))
     New-Item -ItemType Directory -Path $outputDir
 }
 
-If (!(Test-Path $outputDir\$tempDir))
+If (!(Test-Path $tempDir))
 {
-    New-Item -ItemType Directory -Path $outputDir\$tempDir
+    New-Item -ItemType Directory -Path $tempDir
 }
 
 function New-Version {
@@ -60,17 +62,12 @@ function New-Version {
     return "$versionPart.$buildNumber"    
 }
 
-$suffix = ''
-if ($Tag -eq $true){
-    $version = New-Version -InputDir $InputDir
-    $suffix = "_$version"
-}
+Write-Host "Input Dir: $inputDir"
+Write-Host "Output Dir: $outputDir"
 
-$outputFile = (($inputDir -replace "\.\\", "") -replace "\\", "") + "$suffix.docx"
+Copy-Item -Recurse -Path $manuscriptDir -Destination $tempDir -Force
 
-Copy-Item -Recurse -Path $inputDir\$manuscriptDir -Destination $outputDir\$tempDir -Force
-
-$manuscriptFiles = Get-ChildItem $outputDir\$tempDir\$manuscriptDir -rec | Where-Object { $_.Name.EndsWith(".md") }
+$manuscriptFiles = Get-ChildItem $manuscriptDir -rec | Where-Object { $_.Name.EndsWith(".md") }
 $files = New-Object Collections.Generic.List[String]
 
 function Assert-Start-Of-Chapter {
@@ -84,25 +81,35 @@ function Assert-Start-Of-Chapter {
 
 for ($i = 0; $i -lt $manuscriptFiles.Length; $i++)
 {
-    Write-Host "Processing $($manuscriptFiles[$i].FullName)..."
+    Write-Debug "Processing $($manuscriptFiles[$i].FullName)..."
 
     if ($previousFile -ne '' `
     -and !(Assert-Start-Of-Chapter($manuscriptFiles[$i].FullName)) `
     -and !(Assert-Start-Of-Chapter($previousFile)))
     {       
-         Write-Host "$($manuscriptFiles[$i].FullName) is the beginning of a new scene."
+        Write-Debug "$($manuscriptFiles[$i].FullName) is the beginning of a new scene."
         $files.Add($separatorFilePath)
     }  
 
     if (Assert-Start-Of-Chapter($manuscriptFiles[$i].FullName))
     {
-        Write-Host "$($manuscriptFiles[$i].FullName) is the beginning of a new chapter."
+        Write-Debug "$($manuscriptFiles[$i].FullName) is the beginning of a new chapter."
     }   
 
     $files.Add($manuscriptFiles[$i].FullName)
     $previousFile = $manuscriptFiles[$i].FullName;
 }
 
-& 'pandoc' $files --top-level-division=chapter --reference-doc=.\custom-reference.docx -o $outputDir\$outputFile
+$suffix = ''
+if ($Tag -eq $true){
+    $version = New-Version -InputDir $InputDir
+    $suffix = "_$version"
+}
 
-Remove-Item $outputDir\$tempDir\ -Recurse
+$outputFile = (((Split-Path $inputDir -Leaf) -replace "\.\\", "") -replace "\\", "") + "$suffix.docx"
+
+Write-Host "Writing file to $outputDir\$outputFile"
+
+& 'pandoc' $files --top-level-division=chapter --reference-doc=$inputDir\..\custom-reference.docx -o $outputDir\$outputFile
+
+Remove-Item $tempDir -Recurse
