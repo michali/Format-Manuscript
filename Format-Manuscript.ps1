@@ -4,7 +4,7 @@ param(
     [switch]$Tag
 )
 
-. .\lib.ps1 
+. .\Format-Manuscript-Lib.ps1 
 
 if ($Tag -eq $true){
     New-Manuscript -InputDir $InputDir -Tag

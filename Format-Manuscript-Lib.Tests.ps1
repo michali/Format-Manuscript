@@ -1,14 +1,15 @@
-. .\lib.ps1
+. .\Format-Manuscript-Lib.ps1
 
 Describe 'New-Manuscript' {
 
     BeforeAll {
-        Mock -CommandName Test-Path -ParameterFilter { $Path -eq $inputDir} -MockWith { return $true }
-
         function Invoke-Pandoc {}
         Mock Invoke-Pandoc -MockWith {}
-
+        Mock Copy-Item -MockWith {}
+        Mock Get-ChildItem -MockWith { return @() }
+        Mock Remove-Item
         Mock New-Item
+        Mock Test-Path
     }
 
     Context "When the output dir doesn't exist" {
