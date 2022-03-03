@@ -50,7 +50,7 @@ function Assert-Start-Of-Chapter {
 		[Parameter()]
 		[string] $filePath
 	)
-	
+    Write-Debug "Assert Path $filePath"
 	return ((Get-Content $filePath) -join "").StartsWith("# ")
 }
 
@@ -63,9 +63,8 @@ function New-Manuscript{
 
     $InputDir = $InputDir.TrimEnd('\');
     $outputDir = "$InputDir\out"
-    $tempDir = "$outputDir\temp"
     $manuscriptDir = "$InputDir\_Manuscript"
-    $separatorFilePath = "$InputDir\..\Templates\Scene separator.md"
+    $sceneSeparatorFilePath = "$InputDir\..\Templates\Scene separator.md"
 
     If (!(Test-Path $inputDir))
     {
@@ -78,18 +77,12 @@ function New-Manuscript{
         New-Item -ItemType Directory -Path $outputDir
     }
 
-    If (!(Test-Path $tempDir))
-    {
-        New-Item -ItemType Directory -Path $tempDir
-    }
-
     Write-Output "Input Dir: $inputDir"
-    Write-Output "Output Dir: $outputDir"
-
-    Copy-Item -Recurse -Path $manuscriptDir -Destination $tempDir -Force
+    Write-Output "Output Dir: $outputDir"   
 
     $manuscriptFiles = Get-ChildItem $manuscriptDir -rec | Where-Object { $_.Name.EndsWith(".md") }
     $files = New-Object Collections.Generic.List[String]
+    $previousFile = ''
 
     for ($i = 0; $i -lt $manuscriptFiles.Length; $i++)
     {
@@ -100,7 +93,7 @@ function New-Manuscript{
         -and !(Assert-Start-Of-Chapter($previousFile)))
         {       
             Write-Debug "$($manuscriptFiles[$i].FullName) is the beginning of a new scene."
-            $files.Add($separatorFilePath)
+            $files.Add($sceneSeparatorFilePath)
         }  
 
         if (Assert-Start-Of-Chapter($manuscriptFiles[$i].FullName))
@@ -123,6 +116,4 @@ function New-Manuscript{
     Write-Output "Writing file to $outputDir\$outputFile"
 
     Invoke-Pandoc -referenceDocPath "$InputDir\..\custom-reference.docx" -files $files -outputFilePath "$outputDir\$outputFile"
-
-    Remove-Item $tempDir -Recurse
 }
