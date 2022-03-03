@@ -21,20 +21,20 @@ function New-Version {
     $versionSetFilePath = "$versionDir\versionset"
 
     if (!(Test-Path $versionDir)) {
-        Write-Host "Creating version folder"
+        Write-Output "Creating version folder"
         $vd = New-Item -Path $versionDir -ItemType Directory
         $vd.Attributes = $vd.Attributes -bor [System.IO.FileAttributes]::Hidden
     }
     
     if (!(Test-Path $buildFilePath)) {
-        Write-Host "Creating version file"
+        Write-Output "Creating version file"
         $v = New-Item -Path $buildFilePath -ItemType File -Value "0"
         $v.Attributes = $v.Attributes -bor [System.IO.FileAttributes]::Hidden
         $v.Attributes = $v.Attributes -bor [System.IO.FileAttributes]::ReadOnly
     }
 
     if (!(Test-Path $versionSetFilePath)) {
-        Write-Host "Creating version set file"
+        Write-Output "Creating version set file"
         New-Item -Path $versionSetFilePath -ItemType File -Value "1.0"
     }
     
@@ -69,10 +69,10 @@ function New-Manuscript{
 
     If (!(Test-Path $inputDir))
     {
-        Write-Host "Path does not exist: $inputDir" -ForegroundColor Red
-        exit
+        Write-Output "Path does not exist: $inputDir" -ForegroundColor Red
+        throw
     }
-
+    
     If (!(Test-Path $outputDir))
     {
         New-Item -ItemType Directory -Path $outputDir
@@ -83,8 +83,8 @@ function New-Manuscript{
         New-Item -ItemType Directory -Path $tempDir
     }
 
-    Write-Host "Input Dir: $inputDir"
-    Write-Host "Output Dir: $outputDir"
+    Write-Output "Input Dir: $inputDir"
+    Write-Output "Output Dir: $outputDir"
 
     Copy-Item -Recurse -Path $manuscriptDir -Destination $tempDir -Force
 
@@ -120,7 +120,7 @@ function New-Manuscript{
 
     $outputFile = (((Split-Path $inputDir -Leaf) -replace "\.\\", "") -replace "\\", "") + "$suffix.docx"
 
-    Write-Host "Writing file to $outputDir\$outputFile"
+    Write-Output "Writing file to $outputDir\$outputFile"
 
     Invoke-Pandoc -referenceDocPath "$InputDir\..\custom-reference.docx" -files $files -outputFilePath "$outputDir\$outputFile"
 

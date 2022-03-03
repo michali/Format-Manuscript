@@ -1,27 +1,41 @@
-. .\Format-Manuscript-Lib.ps1
+BeforeAll {
+
+    . .\Format-Manuscript-Lib.ps1
+
+    function Invoke-Pandoc {}
+    Mock Invoke-Pandoc {}
+    Mock Copy-Item {}
+    Mock Get-ChildItem {  @() }
+    Mock Remove-Item
+    Mock New-Item
+    Mock Test-Path { $true }
+    Mock Write-Output { }
+}
+
 
 Describe 'New-Manuscript' {
 
-    BeforeAll {
-        function Invoke-Pandoc {}
-        Mock Invoke-Pandoc -MockWith {}
-        Mock Copy-Item -MockWith {}
-        Mock Get-ChildItem -MockWith { return @() }
-        Mock Remove-Item
-        Mock New-Item
-        Mock Test-Path -MockWith { return $true }
+    Context "When the output dir doesn't exist" {
+
+
+        It "Creates an output dir if it isn't there" {
+            $outputDir = ".\testdir\out"
+
+            Mock Test-Path -ParameterFilter {  $Path -eq $outputDir }  { $false }
+           
+            New-Manuscript ".\testdir"
+            Should -Invoke -CommandName New-Item -ParameterFilter { $ItemType -eq "Directory" -and $Path -eq $outputDir }
+         }
     }
 
     Context "When the input dir doesn't exist" {
-        $outputDir = "\testdir\out"
-        
-        Mock -CommandName Test-Path -ParameterFilter {  $Path -eq $outputDir } -MockWith { return $false }
-        Mock -CommandName New-Item -ParameterFilter { $ItemType -eq "Directory" -and $Path -eq $outputDir }
 
-        New-Manuscript "\testdir"
+        It "Exits with error" {
+            $inputDir = ".\testdir"
 
-        It "Creates an output dir if it isn't there" {
-            Assert-MockCalled New-Item -ParameterFilter { $ItemType -eq "Directory" -and $Path -eq $outputDir }
+            Mock Test-Path { $false }        
+    
+            {New-Manuscript $inputDir} | Should -Throw          
          }
     }
 }
