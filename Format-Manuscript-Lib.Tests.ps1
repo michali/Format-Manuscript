@@ -69,17 +69,27 @@ Describe 'New-Manuscript' {
         }
     }
 
-    Context "When specifying not to version the manuscript" {
+    Context "When specifying not to version the manuscript and there are unstaged/untracked changes" {
 
         It "Generates a document without a version suffix"{
-            $inputDir = ".\testdir"            
+            $inputDir = ".\testdir"      
+            Mock Get-UnstagedUntrackedChanges { "M Changed_file.ps1" }      
             New-Manuscript $inputDir -NoVersion
             Should -Invoke -CommandName Invoke-Pandoc -ParameterFilter { $outputFilePath -eq "$inputDir\out\testdir.docx" }
         }
-
     }
 
-    Context "When there are unstaged/untracked changes in git" {
+    Context "When specifying not to version the manuscript and there are no unstaged/untracked changes" {
+
+        It "Generates a document without a version suffix"{
+            $inputDir = ".\testdir"      
+            Mock Get-UnstagedUntrackedChanges { "M Changed_file.ps1" }      
+            New-Manuscript $inputDir -NoVersion
+            Should -Invoke -CommandName Invoke-Pandoc -ParameterFilter { $outputFilePath -eq "$inputDir\out\testdir.docx" }
+        }
+    }
+
+    Context "When there are unstaged/untracked changes in git and the manuscript source code is in the same directory as the one the script is running from" {
 
         It "Generates a document without a version suffix"{
             $inputDir = ".\testdir"   
@@ -93,6 +103,66 @@ Describe 'New-Manuscript' {
             Mock Get-UnstagedUntrackedChanges { "M Changed_file.ps1" }
             New-Manuscript $inputDir
             Should -Invoke -CommandName Write-Warning -ParameterFilter { $Message -eq "There are untracked stages in source control. Generated document won't be vesioned." }
+        }
+    }
+
+    Context "When there are unstaged/untracked changes in git and the manuscript source code is in a directory other that the one the script is running from" {
+
+        It "Generates a document without a version suffix"{
+            $inputDir = ".\testdir"   
+            $sourceControlDir = "C:\Code\Books\Book_Title"
+            Mock Get-UnstagedUntrackedChanges -ParameterFilter { $sourceControlDir -eq $sourceControlDir } { "M Changed_file.ps1" }
+            New-Manuscript -InputDir $inputDir -SourceControlDir $sourceControlDir
+            Should -Invoke -CommandName Invoke-Pandoc -ParameterFilter { $outputFilePath -eq "$inputDir\out\testdir.docx" }
+        }
+
+        It "Should return a warning that a version won't be created for the generated document"{
+            $inputDir = ".\testdir"   
+            $sourceControlDir = "C:\Code\Books\Book_Title"
+            Mock Get-UnstagedUntrackedChanges -ParameterFilter { $sourceControlDir -eq $sourceControlDir } { "M Changed_file.ps1" }
+            New-Manuscript -InputDir $inputDir -SourceControlDir $sourceControlDir
+            Should -Invoke -CommandName Write-Warning -ParameterFilter { $Message -eq "There are untracked stages in source control. Generated document won't be vesioned." }
+        }
+    }
+
+    Context "When there are no unstaged/untracked changes in git and the manuscript source code is in the same directory as the one the script is running from" {
+
+        It "Generates a document with a version suffix"{
+            $inputDir = ".\testdir"   
+            Mock Get-UnstagedUntrackedChanges { "" }
+            Mock New-Version -ParameterFilter { $InputDir -eq $inputDir } { "1.0.0"}
+            New-Manuscript $inputDir
+            Should -Invoke -CommandName Invoke-Pandoc -ParameterFilter { $outputFilePath -eq "$inputDir\out\testdir_1.0.0.docx" }
+        }
+
+        It "Should not return a warning that a version won't be created for the generated document"{
+            $inputDir = ".\testdir"   
+            Mock Get-UnstagedUntrackedChanges { "" }
+            Mock New-Version -ParameterFilter { $InputDir -eq $inputDir } { "1.0.0"}
+            New-Manuscript $inputDir
+            Should -Not -Invoke -CommandName Write-Warning -ParameterFilter { $Message -eq "There are untracked stages in source control. Generated document won't be vesioned." }
+        }
+        
+    }
+
+    Context "When there are no unstaged/untracked changes in git and the manuscript source code is in a directory other that the one the script is running from" {
+
+        It "Generates a document with a version suffix"{
+            $inputDir = ".\testdir"   
+            $sourceControlDir = "C:\Code\Books\Book_Title"
+            Mock Get-UnstagedUntrackedChanges -ParameterFilter { $sourceControlDir -eq $sourceControlDir } { "" }
+            Mock New-Version -ParameterFilter { $InputDir -eq $inputDir } { "1.0.0"}
+            New-Manuscript $inputDir -SourceControlDir $sourceControlDir
+            Should -Invoke -CommandName Invoke-Pandoc -ParameterFilter { $outputFilePath -eq "$inputDir\out\testdir_1.0.0.docx" }
+        }
+
+        It "Should not return a warning that a version won't be created for the generated document"{
+            $inputDir = ".\testdir"   
+            $sourceControlDir = "C:\Code\Books\Book_Title"
+            Mock Get-UnstagedUntrackedChanges { "" }
+            Mock New-Version -ParameterFilter { $sourceControlDir -eq $sourceControlDir } { "1.0.0" }
+            New-Manuscript $inputDir -SourceControlDir $sourceControlDir
+            Should -Not -Invoke -CommandName Write-Warning -ParameterFilter { $Message -eq "There are untracked stages in source control. Generated document won't be vesioned." }
         }
     }
 }

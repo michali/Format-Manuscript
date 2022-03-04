@@ -55,13 +55,18 @@ function Assert-Start-Of-Chapter {
 }
 
 function Get-UnstagedUntrackedChanges {
+    param (
+        [Parameter()]
+        [string]$sourceControlDir
+    )
     return git status --porcelain
 }
 
 function New-Manuscript{
     param(
         [Parameter(Mandatory)]
-        [string]$InputDir, 
+        [string]$InputDir,
+        [string]$sourceControlDir,
         [switch]$NoVersion
     )
 
@@ -111,7 +116,7 @@ function New-Manuscript{
         $previousFile = $manuscriptFiles[$i].FullName;
     }
 
-    $hasUntrackedChanges = Get-UnstagedUntrackedChanges
+    $hasUntrackedChanges = Get-UnstagedUntrackedChanges $sourceControlDir
     if ($hasUntrackedChanges.Length -gt 0){
         Write-Warning "There are untracked stages in source control. Generated document won't be vesioned."
     }
