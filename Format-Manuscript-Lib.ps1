@@ -54,11 +54,14 @@ function Assert-Start-Of-Chapter {
 	return ((Get-Content $filePath) -join "").StartsWith("# ")
 }
 
+function Invoke-Git-Status {
+
+}
+
 function New-Manuscript{
     param(
         [Parameter(Mandatory)]
-        [string]$InputDir, 
-        [switch]$Tag
+        [string]$InputDir
     )
 
     $config = Get-Content .\config.json | ConvertFrom-Json
@@ -107,11 +110,10 @@ function New-Manuscript{
         $previousFile = $manuscriptFiles[$i].FullName;
     }
 
-    $suffix = ''
-    if ($Tag -eq $true){
-        $version = New-Version -InputDir $InputDir
-        $suffix = "_$version"
-    }
+    $suffix = ''  
+    $version = New-Version -InputDir $InputDir
+    $suffix = "_$version"
+ 
 
     $outputFile = (((Split-Path $inputDir -Leaf) -replace "\.\\", "") -replace "\\", "") + "$suffix.docx"
 
