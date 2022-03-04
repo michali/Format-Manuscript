@@ -13,6 +13,7 @@ BeforeAll {
     Mock Write-Output { }
     Mock Get-Content {""}
     Mock Get-UnstagedUntrackedChanges {""}
+    Mock Write-Warning
     Mock Get-Content -ParameterFilter {$Path -eq ".\config.json"} { "{""outputDirPart"": ""out"", ""manuscriptDirPart"": ""_Manuscript"", ""sceneSeparatorFilePath"": ""Templates\\Scene separator.md""}" }
 }
 
@@ -85,6 +86,13 @@ Describe 'New-Manuscript' {
             Mock Get-UnstagedUntrackedChanges { "M Changed_file.ps1" }
             New-Manuscript $inputDir
             Should -Invoke -CommandName Invoke-Pandoc -ParameterFilter { $outputFilePath -eq "$inputDir\out\testdir.docx" }
+        }
+
+        It "Should return a warning that a version won't be created for the generated document"{
+            $inputDir = ".\testdir"   
+            Mock Get-UnstagedUntrackedChanges { "M Changed_file.ps1" }
+            New-Manuscript $inputDir
+            Should -Invoke -CommandName Write-Warning -ParameterFilter { $Message -eq "There are untracked stages in source control. Generated document won't be vesioned." }
         }
     }
 }

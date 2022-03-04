@@ -111,8 +111,12 @@ function New-Manuscript{
         $previousFile = $manuscriptFiles[$i].FullName;
     }
 
+    $hasUntrackedChanges = Get-UnstagedUntrackedChanges
+    if ($hasUntrackedChanges.Length -gt 0){
+        Write-Warning "There are untracked stages in source control. Generated document won't be vesioned."
+    }
     $suffix = ''
-    if ($NoVersion -eq $false -and (Get-UnstagedUntrackedChanges).Length -eq 0){
+    if ($NoVersion -eq $false -and $hasUntrackedChanges.Length -eq 0){
         $version = New-Version -InputDir $InputDir
         $suffix = "_$version"
     }
