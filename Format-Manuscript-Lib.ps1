@@ -61,10 +61,12 @@ function New-Manuscript{
         [switch]$Tag
     )
 
+    $config = Get-Content .\config.json | ConvertFrom-Json
+
     $InputDir = $InputDir.TrimEnd('\');
-    $outputDir = "$InputDir\out"
-    $manuscriptDir = "$InputDir\_Manuscript"
-    $sceneSeparatorFilePath = "$InputDir\..\Templates\Scene separator.md"
+    $outputDir = "$InputDir\$($config.outputDirPart)"
+    $manuscriptDir = "$InputDir\$($config.manuscriptDirPart)"
+    $sceneSeparatorFilePath = "$InputDir\$($config.sceneSeparatorFilePath)"
 
     If (!(Test-Path $inputDir))
     {
@@ -86,19 +88,19 @@ function New-Manuscript{
 
     for ($i = 0; $i -lt $manuscriptFiles.Length; $i++)
     {
-        Write-Debug "Processing $($manuscriptFiles[$i].FullName)..."
+        Write-Verbose "Processing $($manuscriptFiles[$i].FullName)..."
 
         if ($previousFile -ne '' `
         -and !(Assert-Start-Of-Chapter($manuscriptFiles[$i].FullName)) `
         -and !(Assert-Start-Of-Chapter($previousFile)))
         {       
-            Write-Debug "$($manuscriptFiles[$i].FullName) is the beginning of a new scene."
+            Write-Verbose "$($manuscriptFiles[$i].FullName) is the beginning of a new scene."
             $files.Add($sceneSeparatorFilePath)
         }  
 
         if (Assert-Start-Of-Chapter($manuscriptFiles[$i].FullName))
         {
-            Write-Debug "$($manuscriptFiles[$i].FullName) is the beginning of a new chapter."
+            Write-Verbose "$($manuscriptFiles[$i].FullName) is the beginning of a new chapter."
         }   
 
         $files.Add($manuscriptFiles[$i].FullName)
@@ -114,6 +116,6 @@ function New-Manuscript{
     $outputFile = (((Split-Path $inputDir -Leaf) -replace "\.\\", "") -replace "\\", "") + "$suffix.docx"
 
     Write-Output "Writing file to $outputDir\$outputFile"
-
+    Write-Debug "$outputDir\$outputFile"
     Invoke-Pandoc -referenceDocPath "$InputDir\..\custom-reference.docx" -files $files -outputFilePath "$outputDir\$outputFile"
 }
