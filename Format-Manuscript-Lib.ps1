@@ -54,8 +54,8 @@ function Assert-Start-Of-Chapter {
 	return ((Get-Content $filePath) -join "").StartsWith("# ")
 }
 
-function Invoke-Git-Status {
-
+function Get-UnstagedUntrackedChanges {
+    return git status --porcelain
 }
 
 function New-Manuscript{
@@ -112,7 +112,7 @@ function New-Manuscript{
     }
 
     $suffix = ''
-    if ($NoVersion -eq $false){
+    if ($NoVersion -eq $false -and (Get-UnstagedUntrackedChanges).Length -eq 0){
         $version = New-Version -InputDir $InputDir
         $suffix = "_$version"
     }

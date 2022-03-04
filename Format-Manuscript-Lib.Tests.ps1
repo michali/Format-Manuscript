@@ -12,6 +12,7 @@ BeforeAll {
     Mock Test-Path { $true }
     Mock Write-Output { }
     Mock Get-Content {""}
+    Mock Get-UnstagedUntrackedChanges {""}
     Mock Get-Content -ParameterFilter {$Path -eq ".\config.json"} { "{""outputDirPart"": ""out"", ""manuscriptDirPart"": ""_Manuscript"", ""sceneSeparatorFilePath"": ""Templates\\Scene separator.md""}" }
 }
 
@@ -71,10 +72,19 @@ Describe 'New-Manuscript' {
 
         It "Generates a document without a version suffix"{
             $inputDir = ".\testdir"            
-            Mock Get-ChildItem -ParameterFilter {  $Path -eq "$inputDir\_Manuscript" } -MockWith { @([PSCustomObject]@{Name="scene1.md"})}
             New-Manuscript $inputDir -NoVersion
             Should -Invoke -CommandName Invoke-Pandoc -ParameterFilter { $outputFilePath -eq "$inputDir\out\testdir.docx" }
         }
 
+    }
+
+    Context "When there are unstaged/untracked changes in git" {
+
+        It "Generates a document without a version suffix"{
+            $inputDir = ".\testdir"   
+            Mock Get-UnstagedUntrackedChanges { "M Changed_file.ps1" }
+            New-Manuscript $inputDir
+            Should -Invoke -CommandName Invoke-Pandoc -ParameterFilter { $outputFilePath -eq "$inputDir\out\testdir.docx" }
+        }
     }
 }
