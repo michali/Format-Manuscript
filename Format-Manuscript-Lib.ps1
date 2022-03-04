@@ -61,7 +61,8 @@ function Invoke-Git-Status {
 function New-Manuscript{
     param(
         [Parameter(Mandatory)]
-        [string]$InputDir
+        [string]$InputDir, 
+        [switch]$NoVersion
     )
 
     $config = Get-Content .\config.json | ConvertFrom-Json
@@ -110,10 +111,11 @@ function New-Manuscript{
         $previousFile = $manuscriptFiles[$i].FullName;
     }
 
-    $suffix = ''  
-    $version = New-Version -InputDir $InputDir
-    $suffix = "_$version"
- 
+    $suffix = ''
+    if ($NoVersion -eq $false){
+        $version = New-Version -InputDir $InputDir
+        $suffix = "_$version"
+    }
 
     $outputFile = (((Split-Path $inputDir -Leaf) -replace "\.\\", "") -replace "\\", "") + "$suffix.docx"
 

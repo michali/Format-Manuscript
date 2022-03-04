@@ -1,8 +1,9 @@
 param(
     [Parameter(Mandatory)]
-    [string]$InputDir
+    [string]$InputDir, 
+    [switch]$NoVersion
 )
 
 . .\Format-Manuscript-Lib.ps1 
 
-New-Manuscript -InputDir $InputDir
+New-Manuscript -InputDir $InputDir -NoVersion:$NoVersion

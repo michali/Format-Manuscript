@@ -66,4 +66,15 @@ Describe 'New-Manuscript' {
             Should -Invoke -CommandName Invoke-Pandoc -ParameterFilter { $outputFilePath -eq "$inputDir\out\testdir_1.0.0.docx" }
         }
     }
+
+    Context "When specifying not to version the manuscript" {
+
+        It "Generates a document without a version suffix"{
+            $inputDir = ".\testdir"            
+            Mock Get-ChildItem -ParameterFilter {  $Path -eq "$inputDir\_Manuscript" } -MockWith { @([PSCustomObject]@{Name="scene1.md"})}
+            New-Manuscript $inputDir -NoVersion
+            Should -Invoke -CommandName Invoke-Pandoc -ParameterFilter { $outputFilePath -eq "$inputDir\out\testdir.docx" }
+        }
+
+    }
 }
