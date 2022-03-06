@@ -191,6 +191,18 @@ Describe "Versioning" {
         }
     }
 
+    Context "When call to versioning is executed with Draft and Revision, and Draft is greater than the previous draft number"{
+        It "Should reset Revision to 1 and Build to 1 and ignore the provided Revision in the script" {
+            $Script:mockCounter = 0; 
+
+            Mock Get-SavedVersion { "1.5.1" }                
+
+            New-Version ".\testdir" | Should -Be "1.5.2"
+            New-Version ".\testdir" -Draft 2 -Revision 6 | Should -Be "2.1.1"
+        }
+    }
+
+
     # Mock Get-Content -ParameterFilter { $Path -eq "$inputDir\.version\majorMinor" } {
     #     if ($Script:mockCounter -eq 0) {"1.1"} else {"1.1"}
     # }
