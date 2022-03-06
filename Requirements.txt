@@ -11,3 +11,5 @@
 
 
 Gitflow and semver for books
+
+if no source control dir is given, use .

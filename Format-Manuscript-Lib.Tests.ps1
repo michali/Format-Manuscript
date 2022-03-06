@@ -19,6 +19,10 @@ BeforeAll {
 
 Describe 'New-Manuscript' {
 
+    BeforeAll {        
+        Mock New-Version {""}
+    }
+
     Context "When the output dir doesn't exist" {
 
         It "Creates the output dir" {
@@ -84,16 +88,17 @@ Describe "Versioning" {
 
     Context "When there are unstaged/untracked changes" {
 
-        It "Should not create a default version"{
-            $inputDir = ".\testdir"      
-            Mock Get-UnstagedUntrackedChanges { "M Changed_file.ps1" }      
-            New-Version $inputDir | Should -Be ""
+        It "Should not create a default version"{   
+            Mock Get-UnstagedUntrackedChanges { "M Changed_file.ps1" }   
+
+            New-Version ".\testdir" | Should -Be ""
         }
 
         It "Should return a warning that a version won't be created for the generated document"{
-            $inputDir = ".\testdir"   
             Mock Get-UnstagedUntrackedChanges { "M Changed_file.ps1" }
-            New-Version $inputDir
+
+            New-Version ".\testdir" 
+
             Should -Invoke -CommandName Write-Warning -ParameterFilter { $Message -eq "There are untracked stages in source control. Generated document won't be vesioned." }
         }
     }    
@@ -103,75 +108,106 @@ Describe "Versioning" {
         It "Should create a default version"{
             $inputDir = ".\testdir"   
             Mock Get-UnstagedUntrackedChanges { "" }
+            Mock Get-SavedVersion {""}
+
             New-Version $inputDir | Should -Be "0.1.1"
         }
-
-        # It "Should not return a warning that a version won't be created for the generated document"{
-        #     $inputDir = ".\testdir"   
-        #     Mock Get-UnstagedUntrackedChanges { "" }
-        #     Mock New-Version -ParameterFilter { $InputDir -eq $inputDir } { "1.0.1"}
-        #     New-Manuscript $inputDir
-        #     Should -Not -Invoke -CommandName Write-Warning -ParameterFilter { $Message -eq "There are untracked stages in source control. Generated document won't be vesioned." }
-        # }
-        
     }
 
-    # Context "When there are no unstaged/untracked changes in git and the manuscript source code is in a directory other that the one the script is running from" {
+    Context "When the Draft and Revision arguments are specified"{
+        It "Should create a version number in the format of Draft.Revision.1 where 1 is the build number"{
+            $inputDir = ".\testdir"
+            Mock Get-SavedVersion {""}
 
-    #     It "Generates a document with a version suffix"{
-    #         $inputDir = ".\testdir"   
-    #         $sourceControlDir = "C:\Code\Books\Book_Title"
-    #         Mock Get-UnstagedUntrackedChanges -ParameterFilter { $sourceControlDir -eq $sourceControlDir } { "" }
-    #         Mock New-Version -ParameterFilter { $InputDir -eq $inputDir } { "1.0.1"}
-    #         New-Manuscript $inputDir -SourceControlDir $sourceControlDir
-    #         Should -Invoke -CommandName Invoke-Pandoc -ParameterFilter { $outputFilePath -like "*1.0.1.docx" }
-    #     }
+            New-Version $inputDir -Draft 1 -Revision 0 | Should -Be "1.0.1"
+        }
+    }
 
-    #     It "Should not return a warning that a version won't be created for the generated document"{
-    #         $inputDir = ".\testdir"   
-    #         $sourceControlDir = "C:\Code\Books\Book_Title"
-    #         Mock Get-UnstagedUntrackedChanges { "" }
-    #         Mock New-Version -ParameterFilter { $sourceControlDir -eq $sourceControlDir } { "1.0.0" }
-    #         New-Manuscript $inputDir -SourceControlDir $sourceControlDir
-    #         Should -Not -Invoke -CommandName Write-Warning -ParameterFilter { $Message -eq "There are untracked stages in source control. Generated document won't be vesioned." }
-    #     }
-    # }
+    Context "When call to versioning is executed thrice"{
+        It "Draft and Revision numbers should remain the same and the build number should increment" {
+            $inputDir = ".\testdir"  
 
-    # Context "When the document has not been versioned before and the Draft and Revision arguments are not specified"{
-    #     It "Should not give the document a version number"{
-    #         $inputDir = ".\testdir" 
+            $Script:mockCounter = 0; 
+            Mock Get-SavedVersion {
+                switch($Script:mockCounter){
+                    0 { "" }
+                    1 { "0.1.1" }
+                    Default { "0.1.2" }
+                }
+                $Script:mockCounter++
+            }
             
-    #         New-Manuscript $inputDir
+            New-Version $inputDir | Should -Be "0.1.1"
+            New-Version $inputDir | Should -Be "0.1.2"
+            New-Version $inputDir | Should -Be "0.1.3"
+        }
+    }
 
-    #         Should -Invoke -CommandName Invoke-Pandoc -ParameterFilter { $outputFilePath  -notlike "*1.0*" }
-    #     }
-    # }
+    Context "When call to versioning is executed with specified draft number and revision number"{
+        It "Draft and Revision numbers should remain the same and the build number should increment" {
+            $inputDir = ".\testdir"  
 
-    # Context "When the Draft and Revision arguments are specified"{
-    #     It "Should give the document a version number just from Draft and Revision"{
-    #         $inputDir = ".\testdir" 
-
+            $Script:mockCounter = 0; 
+            Mock Get-SavedVersion {
+                switch($Script:mockCounter){
+                    0 { "" }
+                    1 { "1.1.1" }
+                    Default { "1.1.2" }
+                }
+                $Script:mockCounter++
+            }
             
+            New-Version $inputDir -Draft 1 -Revision 1 | Should -Be "1.1.1"
+            New-Version $inputDir -Draft 1 -Revision 1 | Should -Be "1.1.2"
+            New-Version $inputDir -Draft 1 -Revision 1 | Should -Be "1.1.3"
+        }
+    }
 
-    #         New-Manuscript $inputDir -Draft 1 -Revision 0
+    Context "When revision number is incremented"{
+        It "The build number should reset to 1" {
+            $inputDir = ".\testdir"  
+
+            $Script:mockCounter = 0; 
+            Mock Get-SavedVersion {
+                switch($Script:mockCounter){
+                    0 { "" }
+                    1 { "1.1.1" }
+                    Default { "1.1.2" }
+                }
+                $Script:mockCounter++
+            }
             
-    #         Should -Invoke -CommandName Invoke-Pandoc -ParameterFilter { $outputFilePath  -like "*1.0.1*" }
-    #     }
-    # }
+            New-Version $inputDir -Draft 1 -Revision 1 | Should -Be "1.1.1"
+            New-Version $inputDir -Draft 1 -Revision 1 | Should -Be "1.1.2"
+            New-Version $inputDir -Draft 1 -Revision 2 | Should -Be "1.2.1"
+        }
+    }
 
-    # Context "When the Draft and Revision arguments are specified in one invocation and not in the next"{
-    #     It "Should keep the Draft and Revision numbers and increase the build number in the second invocation" {
-    #         $inputDir = ".\testdir"  
+    Context "When call to versioning is executed thrice"{
+        It "Generated version is persisted in the system" {
+            $inputDir = ".\testdir"  
 
-    #         Mock Get-Content -ParameterFilter { $Path -eq "$inputDir\.version\majorMinor" } {"1.1"} 
+            $Script:mockCounter = 0; 
+            Mock Get-SavedVersion {
+                switch($Script:mockCounter){
+                    0 { "" }
+                    1 { "0.1.1" }
+                    Default { "0.1.2" }
+                }
+                $Script:mockCounter++
+            }
+
+            Mock Save-Version {}
             
-    #         New-Manuscript $inputDir -Draft 1 -Revision 1
-    #         New-Manuscript $inputDir
+            New-Version $inputDir
+            New-Version $inputDir
+            New-Version $inputDir
 
-    #         Should -Invoke -CommandName Invoke-Pandoc -ParameterFilter { $outputFilePath  -like "*1.1.0*" }
-    #         Should -Invoke -CommandName Invoke-Pandoc -ParameterFilter { $outputFilePath  -like "*1.1.1*" }
-    #     }
-    # }
+            Should -Invoke Save-Version -ParameterFilter { $Version -eq "0.1.1" }
+            Should -Invoke Save-Version -ParameterFilter { $Version -eq "0.1.2" }
+            Should -Invoke Save-Version -ParameterFilter { $Version -eq "0.1.3" }
+        }
+    }
 
     # Mock Get-Content -ParameterFilter { $Path -eq "$inputDir\.version\majorMinor" } {
     #     if ($Script:mockCounter -eq 0) {"1.1"} else {"1.1"}

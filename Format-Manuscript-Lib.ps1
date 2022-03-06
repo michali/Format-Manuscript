@@ -9,28 +9,15 @@ function Invoke-Pandoc {
     & 'pandoc' $files --top-level-division=chapter --reference-doc=$referenceDocPath -o $outputFilePath
 }
 
-function New-Version {
+function Get-SavedVersion {
+
+}
+
+function Save-Version {
     param(
-		[Parameter(Mandatory)]
-		[string]$InputDir,
-        [int]$Draft,
-        [int]$Revision
-	)
-
-    $hasUntrackedChanges = Get-UnstagedUntrackedChanges $sourceControlDir
-    if ($hasUntrackedChanges.Length -gt 0){
-        Write-Warning "There are untracked stages in source control. Generated document won't be vesioned."
-        return ""
-    }
-
-    # if ($PSBoundParameters.ContainsKey("Draft") -and $PSBoundParameters.ContainsKey("Revision")){
-    #     $majorMinor = "$Draft.$Revision"
-    # }
-    # else {
-       $majorMinor = "0.1"
-    # }
-
-    $buildNumber = "1"
+        [Parameter(Mandatory)]
+        [string]$Version
+    )
 
     # Create structure if it doesn't exist
     # $versionDir = "$InputDir\.version"
@@ -54,12 +41,57 @@ function New-Version {
     #     Write-Output "Creating version set file"
     #     New-Item -Path $majorMinorFilePath -ItemType File -Value $majorMinor
     # }
-    
-    #Get version and increase the build number
-    # $versionPart = Get-Content $majorMinorFilePath
-    # $buildNumber = [int](Get-Content $buildFilePath) + 1
+}
 
-    return "$majorMinor.$buildNumber"    
+function New-Version {
+    param(
+		[Parameter(Mandatory)]
+		[string]$InputDir,
+        [string]$SourceControlDir,
+        [int]$Draft,
+        [int]$Revision
+	)
+
+    $hasUntrackedChanges = Get-UnstagedUntrackedChanges -SourceControlDir:$SourceControlDir
+
+    if ($hasUntrackedChanges.Length -gt 0){
+        Write-Warning "There are untracked stages in source control. Generated document won't be vesioned."
+        return ""
+    }
+
+    $savedVersionParts = (Get-SavedVersion).Split('.')
+
+    if ($savedVersionParts.Length -eq 1){
+        if ($PSBoundParameters.ContainsKey("Draft") -and $PSBoundParameters.ContainsKey("Revision")){
+            $majorMinor = "$Draft.$Revision"
+        }
+        else {
+           $majorMinor = "0.1"
+        }
+    
+        $buildNumber = 1   
+    }
+    else {
+        if ($PSBoundParameters.ContainsKey("Draft") -and $PSBoundParameters.ContainsKey("Revision")){
+            $majorMinor = "$Draft.$Revision"
+            if ($Revision -gt $savedVersionParts[1]){
+                $buildNumber = 1
+            }
+            else {
+                $buildNumber = [int]$savedVersionParts[2] + 1
+            }
+        }
+        else {
+            $majorMinor = "$($savedVersionParts[0]).$($savedVersionParts[1])"
+            $buildNumber = [int]$savedVersionParts[2] + 1
+        }
+    }
+    
+    $version = "$majorMinor.$buildNumber"
+
+    Save-Version $version    
+
+    return $version
 }
 
 function Assert-StartOfChapter {
@@ -74,9 +106,9 @@ function Assert-StartOfChapter {
 function Get-UnstagedUntrackedChanges {
     param (
         [Parameter()]
-        [string]$sourceControlDir
+        [string]$SourceControlDir
     )
-    return git status --porcelain
+    return git -C $SourceControlDir status --porcelain
 }
 
 function New-Manuscript{
@@ -138,7 +170,7 @@ function New-Manuscript{
     $suffix = ''
     if ($NoVersion -eq $false){
         $suffix = "_"
-        $version = New-Version -InputDir $InputDir -Draft:$Draft -Revision:$Revision
+        $version = New-Version -InputDir $InputDir -Draft:$Draft -Revision:$Revision -SourceControlDir:$sourceControlDir
         
         if ($PSBoundParameters.ContainsKey("Draft") -and $PSBoundParameters.ContainsKey("Revision")){
             $version = "$Draft.$Revision.0"
