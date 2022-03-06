@@ -12,3 +12,6 @@
 
 Gitflow and semver for books
 
+Bugs:
+New-Item for version file should be outside the test-path to check for dir
+$PSBoundParameters.ContainsKey("SourceControlDir") returns true when i run it for real

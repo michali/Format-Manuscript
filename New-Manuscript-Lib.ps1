@@ -152,7 +152,7 @@ function Set-SourceControlTag {
         [string]$SourceControlDir,
         [string]$Tag
     )
-    return git -C $SourceControlDir status --porcelain
+   # return git -C $SourceControlDir status --porcelain
 }
 
 function New-Manuscript{
@@ -165,7 +165,7 @@ function New-Manuscript{
         [switch]$NoVersion
     )
 
-    $config = Get-Content .\config.json | ConvertFrom-Json
+    $config = Get-Content "$PSScriptRoot\config.json" | ConvertFrom-Json
 
     $InputDir = $InputDir.TrimEnd('\');
     $outputDir = "$InputDir\$($config.outputDirPart)"

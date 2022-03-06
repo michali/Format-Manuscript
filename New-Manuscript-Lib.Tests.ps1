@@ -10,7 +10,7 @@ BeforeAll {
     Mock Get-Content {""}
     Mock Get-UnstagedUntrackedChanges {""}
     Mock Write-Warning
-    Mock Get-Content -ParameterFilter {$Path -eq ".\config.json"} { "{""outputDirPart"": ""out"", ""manuscriptDirPart"": ""_Manuscript"", ""sceneSeparatorFilePath"": ""Templates\\Scene separator.md""}" }
+    Mock Get-Content -ParameterFilter {$Path -eq "$PSScriptRoot\config.json"} { "{""outputDirPart"": ""out"", ""manuscriptDirPart"": ""_Manuscript"", ""sceneSeparatorFilePath"": ""Templates\\Scene separator.md""}" }
 }
 
 Describe 'New-Manuscript' {
