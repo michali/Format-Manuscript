@@ -4,10 +4,6 @@ BeforeAll {
 
     # Default mocks of commands so the script does not cross application boundaries
     # when tests are running
-    Mock Invoke-Pandoc {}
-    Mock Copy-Item {}
-    Mock Get-ChildItem {  @() }
-    Mock Remove-Item
     Mock New-Item
     Mock Test-Path { $true }
     Mock Write-Output { }
@@ -19,7 +15,11 @@ BeforeAll {
 
 Describe 'New-Manuscript' {
 
-    BeforeAll {        
+    BeforeAll {    
+        Mock Invoke-Pandoc {}     
+        Mock Copy-Item {}   
+        Mock Get-ChildItem {  @() } 
+        Mock Save-Version
         Mock New-Version {""}
     }
 
@@ -84,7 +84,11 @@ Describe 'New-Manuscript' {
     }
 }
 
-Describe "Versioning" {    
+Describe "Versioning" {  
+    
+    BeforeAll {        
+        Mock Read-Host {"Y"}
+    }
 
     Context "When there are unstaged/untracked changes" {
 
@@ -192,19 +196,60 @@ Describe "Versioning" {
     }
 
     Context "When call to versioning is executed with Draft and Revision, and Draft is greater than the previous draft number"{
-        It "Should reset Revision to 1 and Build to 1 and ignore the provided Revision in the script" {
+        It "Should reset Revision to 1 and Build to 1, give a prompt where Y ignore the provided Revision in the script" {
             $Script:mockCounter = 0; 
 
             Mock Get-SavedVersion { "1.5.1" }                
+            Mock Read-Host { "Y" }
 
-            New-Version ".\testdir" | Should -Be "1.5.2"
-            New-Version ".\testdir" -Draft 2 -Revision 6 | Should -Be "2.1.1"
+            $version = New-Version ".\testdir" -Draft 2 -Revision 6
+
+            Should -Invoke Read-Host -ParameterFilter { $Prompt -eq "Draft and Revision were both provided but the provided draft number is greater than the revision number of the previous document version. Draft number will be reset to 1. Type Y to proceed."}
+            $version | Should -Be "2.1.1"
         }
     }
 
+    Context "When call to versioning is executed with Draft and Revision, and Draft is greater than the previous draft number"{
+        It "Should reset Revision to 1 and Build to 1, give a prompt where no would exit with no version" {
+            $Script:mockCounter = 0; 
 
-    # Mock Get-Content -ParameterFilter { $Path -eq "$inputDir\.version\majorMinor" } {
-    #     if ($Script:mockCounter -eq 0) {"1.1"} else {"1.1"}
-    # }
+            Mock Get-SavedVersion { "1.5.1" }                
+            Mock Read-Host { "N" }
 
+            $version = New-Version ".\testdir" -Draft 2 -Revision 6
+
+            Should -Invoke Read-Host -ParameterFilter { $Prompt -eq "Draft and Revision were both provided but the provided draft number is greater than the revision number of the previous document version. Draft number will be reset to 1. Type Y to proceed."}
+            $version | Should -Be ""
+        }
+    }
+}
+
+Describe "Save Version" {
+
+    BeforeAll {
+        Mock New-Hidden
+        mock New-HiddenReadOnly
+    }
+
+    Context "When version directory doesn't exist" {
+        It "Should be created" {
+
+            Mock Test-Path -ParameterFilter { $Path -eq ".\testdir\.version" } { $false }
+           
+            Save-Version -InputDir ".\testdir" -Version "1.0.0"
+
+            Should -Invoke New-Hidden -ParameterFilter { $Path -eq ".\testdir\.version" -and $ItemType -eq "Directory"}
+        }
+    }
+
+    Context "When version file doesn't exist" {
+        It "Should be created" {
+
+            Mock Test-Path -ParameterFilter { $Path -eq ".\testdir\.version" } { $false }
+
+            Save-Version -InputDir ".\testdir" -Version "1.0.0"
+
+            Should -Invoke New-HiddenReadOnly -ParameterFilter { $Path -eq ".\testdir\.version\version" -and $ItemType -eq "File" -and $Content -eq "1.0.0"}            
+        }
+    }
 }

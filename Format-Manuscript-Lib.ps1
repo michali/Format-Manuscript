@@ -10,37 +10,52 @@ function Invoke-Pandoc {
 }
 
 function Get-SavedVersion {
+    param(
+        [Parameter(Mandatory)]
+        [string]$InputDir
+    )
+    return Get-Content "$InputDir\.version\version"
+}
 
+function New-Hidden {
+    param(
+        [Parameter(Mandatory)]
+        [string]$Path,
+        [Parameter(Mandatory)]
+        [string]$ItemType
+    )
+    $item = New-Item -Path $Path -ItemType $ItemType
+    $item.Attributes = $item.Attributes -bor [System.IO.FileAttributes]::Hidden
+}
+
+function New-HiddenReadOnly {
+    param(
+        [Parameter(Mandatory)]
+        [string]$Path,
+        [Parameter(Mandatory)]
+        [string]$ItemType,
+        [Parameter(Mandatory)]
+        [string]$Content
+    )
+
+    $item = New-Item -Path $Path -ItemType $ItemType -Value $Content
+    $item.Attributes = $item.Attributes -bor [System.IO.FileAttributes]::Hidden
+    $item.Attributes = $item.Attributes -bor [System.IO.FileAttributes]::ReadOnly  
 }
 
 function Save-Version {
     param(
         [Parameter(Mandatory)]
+        [string]$InputDir,
+        [Parameter(Mandatory)]
         [string]$Version
     )
-
-    # Create structure if it doesn't exist
-    # $versionDir = "$InputDir\.version"
-    # $buildFilePath = "$versionDir\build"
-    # $majorMinorFilePath = "$versionDir\majorMinor"
-
-    # if (!(Test-Path $versionDir)) {
-    #     Write-Output "Creating version folder"
-    #     $vd = New-Item -Path $versionDir -ItemType Directory
-    #     $vd.Attributes = $vd.Attributes -bor [System.IO.FileAttributes]::Hidden
-    # }
-    
-    # if (!(Test-Path $buildFilePath)) {
-    #     Write-Output "Creating version file"
-    #     $v = New-Item -Path $buildFilePath -ItemType File -Value "0"
-    #     $v.Attributes = $v.Attributes -bor [System.IO.FileAttributes]::Hidden
-    #     $v.Attributes = $v.Attributes -bor [System.IO.FileAttributes]::ReadOnly
-    # }
-
-    # if (!(Test-Path $majorMinorFilePath)) {
-    #     Write-Output "Creating version set file"
-    #     New-Item -Path $majorMinorFilePath -ItemType File -Value $majorMinor
-    # }
+    $versionDir = "$InputDir\.version"
+   
+    if (!(Test-Path $versionDir)) {
+        New-Hidden -Path $versionDir -ItemType Directory
+        New-HiddenReadOnly -Path "$versionDir\version" -ItemType File -Content $Version
+    }
 }
 
 function New-Version {
@@ -59,7 +74,7 @@ function New-Version {
         return ""
     }
 
-    $savedVersionParts = (Get-SavedVersion).Split('.')
+    $savedVersionParts = (Get-SavedVersion $InputDir).Split('.')
 
     if ($savedVersionParts.Length -eq 1){
         if ($PSBoundParameters.ContainsKey("Draft") -and $PSBoundParameters.ContainsKey("Revision")){
@@ -77,6 +92,11 @@ function New-Version {
         $savedBuild = $savedVersionParts[2]
         if ($PSBoundParameters.ContainsKey("Draft") -or $PSBoundParameters.ContainsKey("Revision")){
             if ($Draft -gt $savedDraft){
+                $continue = Read-Host "Draft and Revision were both provided but the provided draft number is greater than the revision number of the previous document version. Draft number will be reset to 1. Type Y to proceed."
+                
+                if ($continue -ne "Y"){
+                    return "";
+                }
                 $Revision = "1"
                 $buildNumber = 1
             } else {
@@ -97,7 +117,7 @@ function New-Version {
     
     $version = "$majorMinor.$buildNumber"
 
-    Save-Version $version    
+    Save-Version $InputDir $version    
 
     return $version
 }
@@ -178,18 +198,13 @@ function New-Manuscript{
     $suffix = ''
     if ($NoVersion -eq $false){
         $suffix = "_"
-        $version = New-Version -InputDir $InputDir -Draft:$Draft -Revision:$Revision -SourceControlDir:$sourceControlDir
-        
-        if ($PSBoundParameters.ContainsKey("Draft") -and $PSBoundParameters.ContainsKey("Revision")){
-            $version = "$Draft.$Revision.0"
-        }
-
+        $version = New-Version -InputDir $InputDir -Draft:$Draft -Revision:$Revision -SourceControlDir:$sourceControlDir        
         $suffix = "$suffix$version"
     }
 
     $outputFile = (((Split-Path $inputDir -Leaf) -replace "\.\\", "") -replace "\\", "") + "$suffix.docx"
 
     Write-Output "Writing file to $outputDir\$outputFile"
-    Write-Debug "$outputDir\$outputFile"
+
     Invoke-Pandoc -referenceDocPath "$InputDir\..\custom-reference.docx" -files $files -outputFilePath "$outputDir\$outputFile"
 }
