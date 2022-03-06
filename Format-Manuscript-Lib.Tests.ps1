@@ -106,26 +106,25 @@ Describe "Versioning" {
     Context "When there are no unstaged/untracked changes" {
 
         It "Should create a default version"{
-            $inputDir = ".\testdir"   
+
             Mock Get-UnstagedUntrackedChanges { "" }
             Mock Get-SavedVersion {""}
 
-            New-Version $inputDir | Should -Be "0.1.1"
+            New-Version $".\testdir" | Should -Be "0.1.1"
         }
     }
 
     Context "When the Draft and Revision arguments are specified"{
         It "Should create a version number in the format of Draft.Revision.1 where 1 is the build number"{
-            $inputDir = ".\testdir"
+
             Mock Get-SavedVersion {""}
 
-            New-Version $inputDir -Draft 1 -Revision 0 | Should -Be "1.0.1"
+            New-Version ".\testdir" -Draft 1 -Revision 0 | Should -Be "1.0.1"
         }
     }
 
     Context "When call to versioning is executed thrice"{
         It "Draft and Revision numbers should remain the same and the build number should increment" {
-            $inputDir = ".\testdir"  
 
             $Script:mockCounter = 0; 
             Mock Get-SavedVersion {
@@ -137,15 +136,14 @@ Describe "Versioning" {
                 $Script:mockCounter++
             }
             
-            New-Version $inputDir | Should -Be "0.1.1"
-            New-Version $inputDir | Should -Be "0.1.2"
-            New-Version $inputDir | Should -Be "0.1.3"
+            New-Version ".\testdir" | Should -Be "0.1.1"
+            New-Version ".\testdir" | Should -Be "0.1.2"
+            New-Version ".\testdir" | Should -Be "0.1.3"
         }
     }
 
     Context "When call to versioning is executed with specified draft number and revision number"{
         It "Draft and Revision numbers should remain the same and the build number should increment" {
-            $inputDir = ".\testdir"  
 
             $Script:mockCounter = 0; 
             Mock Get-SavedVersion {
@@ -157,15 +155,15 @@ Describe "Versioning" {
                 $Script:mockCounter++
             }
             
-            New-Version $inputDir -Draft 1 -Revision 1 | Should -Be "1.1.1"
-            New-Version $inputDir -Draft 1 -Revision 1 | Should -Be "1.1.2"
-            New-Version $inputDir -Draft 1 -Revision 1 | Should -Be "1.1.3"
+            New-Version ".\testdir" -Draft 1 -Revision 1 | Should -Be "1.1.1"
+            New-Version ".\testdir" -Draft 1 -Revision 1 | Should -Be "1.1.2"
+            New-Version ".\testdir" -Draft 1 -Revision 1 | Should -Be "1.1.3"
         }
     }
 
     Context "When revision number is incremented"{
         It "The build number should reset to 1" {
-            $inputDir = ".\testdir"  
+ 
 
             $Script:mockCounter = 0; 
             Mock Get-SavedVersion {
@@ -177,35 +175,9 @@ Describe "Versioning" {
                 $Script:mockCounter++
             }
             
-            New-Version $inputDir -Draft 1 -Revision 1 | Should -Be "1.1.1"
-            New-Version $inputDir -Draft 1 -Revision 1 | Should -Be "1.1.2"
-            New-Version $inputDir -Draft 1 -Revision 2 | Should -Be "1.2.1"
-        }
-    }
-
-    Context "When call to versioning is executed thrice"{
-        It "Generated version is persisted in the system" {
-            $inputDir = ".\testdir"  
-
-            $Script:mockCounter = 0; 
-            Mock Get-SavedVersion {
-                switch($Script:mockCounter){
-                    0 { "" }
-                    1 { "0.1.1" }
-                    Default { "0.1.2" }
-                }
-                $Script:mockCounter++
-            }
-
-            Mock Save-Version {}
-            
-            New-Version $inputDir
-            New-Version $inputDir
-            New-Version $inputDir
-
-            Should -Invoke Save-Version -ParameterFilter { $Version -eq "0.1.1" }
-            Should -Invoke Save-Version -ParameterFilter { $Version -eq "0.1.2" }
-            Should -Invoke Save-Version -ParameterFilter { $Version -eq "0.1.3" }
+            New-Version ".\testdir" -Draft 1 -Revision 1 | Should -Be "1.1.1"
+            New-Version ".\testdir" -Draft 1 -Revision 1 | Should -Be "1.1.2"
+            New-Version ".\testdir" -Draft 1 -Revision 2 | Should -Be "1.2.1"
         }
     }
 
