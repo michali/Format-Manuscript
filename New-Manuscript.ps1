@@ -7,6 +7,6 @@ param(
     [switch]$NoVersion
 )
 
-. .\Format-Manuscript-Lib.ps1 
+. .\New-Manuscript-Lib.ps1 
 
 New-Manuscript -InputDir $InputDir -SourceControlDir $sourceControlDir -Draft $Draft -Revision $Revision -NoVersion:$NoVersion 

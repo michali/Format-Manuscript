@@ -1,6 +1,6 @@
 BeforeAll {
 
-    . .\Format-Manuscript-Lib.ps1
+    . .\New-Manuscript-Lib.ps1
 
     # Default mocks of commands so the script does not cross application boundaries
     # when tests are running
