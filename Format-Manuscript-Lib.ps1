@@ -139,11 +139,20 @@ function Get-UnstagedUntrackedChanges {
     return git -C $SourceControlDir status --porcelain
 }
 
+function Set-SourceControlTag {
+    param (
+        [Parameter()]
+        [string]$SourceControlDir,
+        [string]$Tag
+    )
+    return git -C $SourceControlDir status --porcelain
+}
+
 function New-Manuscript{
     param(
         [Parameter(Mandatory)]
         [string]$InputDir,
-        [string]$sourceControlDir,
+        [string]$SourceControlDir,
         [int]$Draft,
         [int]$Revision,
         [switch]$NoVersion
@@ -155,6 +164,10 @@ function New-Manuscript{
     $outputDir = "$InputDir\$($config.outputDirPart)"
     $manuscriptDir = "$InputDir\$($config.manuscriptDirPart)"
     $sceneSeparatorFilePath = "$InputDir\$($config.sceneSeparatorFilePath)"
+    
+    if (!$PSBoundParameters.ContainsKey("SourceControlDir")) {
+        $SourceControlDir = ".\"
+    }
 
     If (!(Test-Path $inputDir))
     {
@@ -198,7 +211,12 @@ function New-Manuscript{
     $suffix = ''
     if ($NoVersion -eq $false){
         $suffix = "_"
-        $version = New-Version -InputDir $InputDir -Draft:$Draft -Revision:$Revision -SourceControlDir:$sourceControlDir        
+        $version = New-Version -InputDir $InputDir -Draft:$Draft -Revision:$Revision -SourceControlDir:$SourceControlDir   
+        
+        if ($version -ne ""){
+            Set-SourceControlTag $SourceControlDir $version
+        }
+        
         $suffix = "$suffix$version"
     }
 

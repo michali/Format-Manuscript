@@ -21,6 +21,7 @@ Describe 'New-Manuscript' {
         Mock Get-ChildItem {  @() } 
         Mock Save-Version
         Mock New-Version {""}
+        Mock Set-SourceControlTag {}
     }
 
     Context "When the output dir doesn't exist" {
@@ -66,7 +67,7 @@ Describe 'New-Manuscript' {
             Mock Get-ChildItem -ParameterFilter {  $Path -eq "$inputDir\_Manuscript" } -MockWith { @([PSCustomObject]@{Name="scene1.md"; FullName="$inputDir\_Manuscript\scene1.md"},[PSCustomObject]@{Name="scene2.md"; FullName="$inputDir\_Manuscript\scene2.md"} ) }
             Mock Get-Content -ParameterFilter { $Path -eq "$inputDir\_Manuscript\scene1.md" } { "" }
             Mock Get-Content -ParameterFilter { $Path -eq "$inputDir\_Manuscript\scene2.md" } { "" }
-            Mock New-Version -ParameterFilter { $InputDir -eq $inputDir } { "1.0.0"} 
+            Mock New-Version -ParameterFilter { $InputDir -eq $inputDir } { "1.0.0" } 
             New-Manuscript $inputDir
             
             Should -Invoke -CommandName Invoke-Pandoc -ParameterFilter { $outputFilePath -eq "$inputDir\out\testdir_1.0.0.docx" }
@@ -80,7 +81,40 @@ Describe 'New-Manuscript' {
             New-Manuscript $inputDir -NoVersion
             Should -Invoke -CommandName Invoke-Pandoc -ParameterFilter { $outputFilePath -eq "$inputDir\out\testdir.docx" }
         }
-    }    
+    }   
+        
+    Context "When a version is created" {
+
+        It "Tags the head of the source control"{
+            Mock New-Version { "1.0.0" } 
+
+            New-Manuscript ".\testdir"
+
+            Should -Invoke -CommandName Set-SourceControlTag -ParameterFilter { $Tag -eq "1.0.0" }
+        }
+    }
+    
+    Context "When a version is not created" {
+
+        It "Does not tag the head of the source control"{
+            Mock New-Version { "" } 
+
+            New-Manuscript ".\testdir"
+
+            Should -Invoke -CommandName Set-SourceControlTag -Exactly 0
+        }
+    } 
+
+    Context "When a directory with the manuscript source files is not provided" {
+
+        It "Should use the current directory as the source control directory"{
+            Mock New-Version { "1.1.0" } 
+
+            New-Manuscript ".\testdir"
+
+            Should -Invoke -CommandName Set-SourceControlTag -ParameterFilter { $SourceControlDir -eq ".\"}
+        }
+    } 
 }
 
 Describe "Versioning" {  
