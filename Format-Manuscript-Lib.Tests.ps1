@@ -162,8 +162,7 @@ Describe "Versioning" {
     }
 
     Context "When revision number is incremented"{
-        It "The build number should reset to 1" {
- 
+        It "The build number should reset to 1" { 
 
             $Script:mockCounter = 0; 
             Mock Get-SavedVersion {
@@ -178,6 +177,17 @@ Describe "Versioning" {
             New-Version ".\testdir" -Draft 1 -Revision 1 | Should -Be "1.1.1"
             New-Version ".\testdir" -Draft 1 -Revision 1 | Should -Be "1.1.2"
             New-Version ".\testdir" -Draft 1 -Revision 2 | Should -Be "1.2.1"
+        }
+    }
+
+    Context "When call to versioning is executed only with Draft and Draft is greater than the previous draft number"{
+        It "Should reset Revision to 1 and Build to 1" {
+            $Script:mockCounter = 0; 
+
+            Mock Get-SavedVersion { "1.1.1" }                
+
+            New-Version ".\testdir" | Should -Be "1.1.2"
+            New-Version ".\testdir" -Draft 2 | Should -Be "2.1.1"
         }
     }
 

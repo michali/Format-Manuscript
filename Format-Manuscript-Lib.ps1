@@ -72,14 +72,19 @@ function New-Version {
         $buildNumber = 1   
     }
     else {
-        if ($PSBoundParameters.ContainsKey("Draft") -and $PSBoundParameters.ContainsKey("Revision")){
-            $majorMinor = "$Draft.$Revision"
-            if ($Revision -gt $savedVersionParts[1]){
+        if ($PSBoundParameters.ContainsKey("Draft") -or $PSBoundParameters.ContainsKey("Revision")){
+            if ($Draft -gt $savedVersionParts[0]){
+                $Revision = "1"
                 $buildNumber = 1
+            } else {
+                if ($Revision -gt $savedVersionParts[1]){
+                    $buildNumber = 1
+                }
+                else {
+                    $buildNumber = [int]$savedVersionParts[2] + 1
+                }
             }
-            else {
-                $buildNumber = [int]$savedVersionParts[2] + 1
-            }
+            $majorMinor = "$Draft.$Revision"
         }
         else {
             $majorMinor = "$($savedVersionParts[0]).$($savedVersionParts[1])"
