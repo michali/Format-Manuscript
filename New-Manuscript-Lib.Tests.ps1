@@ -291,11 +291,12 @@ Describe "Get-SavedVersion" {
     Context "When version data doesn't exist in the system" {
         It "Should return empty" {
             $inputDir = ".\testdir"
+            $versionDir = "$testdir\.version\version"
           
             Mock Get-Content
-            Mock Test-Path -ParameterFilter { $InputDir -eq $inputDir } { $false }
+            Mock Test-Path -ParameterFilter { $Path -eq $versionDir } { $false }
 
-            Get-SavedVersion $inputDir
+            Get-SavedVersion $inputDir | Should -Be ""
 
             Should -Invoke Get-Content -Exactly 0
         }
@@ -306,12 +307,10 @@ Describe "Get-SavedVersion" {
             $inputDir = ".\testdir"
             $versionDir = "$inputDir\.version\version"
 
-            Mock Get-Content -ParameterFilter { $Path -eq $versionDir }
-            Mock Test-Path -ParameterFilter { $InputDir -eq $inputDir } { $true }
+            Mock Get-Content -ParameterFilter { $Path -eq $versionDir } {"123"}
+            Mock Test-Path -ParameterFilter { $InputDir -eq $versionDir } { $true }
 
-            Get-SavedVersion $inputDir
-
-            Should -Invoke Get-Content -ParameterFilter { $Path -eq $versionDir }
+            Get-SavedVersion $inputDir | Should -Be "123"
         }
     }
 }

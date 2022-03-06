@@ -14,10 +14,14 @@ function Get-SavedVersion {
         [Parameter(Mandatory)]
         [string]$InputDir
     )
-
-    if (Test-Path($inputDir)){
-        return Get-Content "$InputDir\.version\version"
-    }    
+    $versionDir = "$InputDir\.version\version"
+    write-Debug $versionDir
+    if (Test-Path($versionDir)){
+        write-Debug 1
+        return Get-Content $versionDir
+    }
+    write-Debug 2
+    return ""    
 }
 
 function New-Hidden {
