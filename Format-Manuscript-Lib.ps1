@@ -17,41 +17,49 @@ function New-Version {
         [int]$Revision
 	)
 
-    if ($PSBoundParameters.ContainsKey("Draft") -and $PSBoundParameters.ContainsKey("Revision")){
-        $majorMinor = "$Draft.$Revision"
+    $hasUntrackedChanges = Get-UnstagedUntrackedChanges $sourceControlDir
+    if ($hasUntrackedChanges.Length -gt 0){
+        Write-Warning "There are untracked stages in source control. Generated document won't be vesioned."
+        return ""
     }
-    else {
-        $majorMinor = "1.0"
-    }
+
+    # if ($PSBoundParameters.ContainsKey("Draft") -and $PSBoundParameters.ContainsKey("Revision")){
+    #     $majorMinor = "$Draft.$Revision"
+    # }
+    # else {
+       $majorMinor = "0.1"
+    # }
+
+    $buildNumber = "1"
 
     # Create structure if it doesn't exist
-    $versionDir = "$InputDir\.version"
-    $buildFilePath = "$versionDir\build"
-    $majorMinorFilePath = "$versionDir\majorMinor"
+    # $versionDir = "$InputDir\.version"
+    # $buildFilePath = "$versionDir\build"
+    # $majorMinorFilePath = "$versionDir\majorMinor"
 
-    if (!(Test-Path $versionDir)) {
-        Write-Output "Creating version folder"
-        $vd = New-Item -Path $versionDir -ItemType Directory
-        $vd.Attributes = $vd.Attributes -bor [System.IO.FileAttributes]::Hidden
-    }
+    # if (!(Test-Path $versionDir)) {
+    #     Write-Output "Creating version folder"
+    #     $vd = New-Item -Path $versionDir -ItemType Directory
+    #     $vd.Attributes = $vd.Attributes -bor [System.IO.FileAttributes]::Hidden
+    # }
     
-    if (!(Test-Path $buildFilePath)) {
-        Write-Output "Creating version file"
-        $v = New-Item -Path $buildFilePath -ItemType File -Value "0"
-        $v.Attributes = $v.Attributes -bor [System.IO.FileAttributes]::Hidden
-        $v.Attributes = $v.Attributes -bor [System.IO.FileAttributes]::ReadOnly
-    }
+    # if (!(Test-Path $buildFilePath)) {
+    #     Write-Output "Creating version file"
+    #     $v = New-Item -Path $buildFilePath -ItemType File -Value "0"
+    #     $v.Attributes = $v.Attributes -bor [System.IO.FileAttributes]::Hidden
+    #     $v.Attributes = $v.Attributes -bor [System.IO.FileAttributes]::ReadOnly
+    # }
 
-    if (!(Test-Path $majorMinorFilePath)) {
-        Write-Output "Creating version set file"
-        New-Item -Path $majorMinorFilePath -ItemType File -Value $majorMinor
-    }
+    # if (!(Test-Path $majorMinorFilePath)) {
+    #     Write-Output "Creating version set file"
+    #     New-Item -Path $majorMinorFilePath -ItemType File -Value $majorMinor
+    # }
     
     #Get version and increase the build number
-    $versionPart = Get-Content $majorMinorFilePath
-    $buildNumber = [int](Get-Content $buildFilePath) + 1
+    # $versionPart = Get-Content $majorMinorFilePath
+    # $buildNumber = [int](Get-Content $buildFilePath) + 1
 
-    return "$versionPart.$buildNumber"    
+    return "$majorMinor.$buildNumber"    
 }
 
 function Assert-StartOfChapter {
@@ -127,12 +135,8 @@ function New-Manuscript{
         $previousFile = $manuscriptFiles[$i].FullName;
     }
 
-    $hasUntrackedChanges = Get-UnstagedUntrackedChanges $sourceControlDir
-    if ($hasUntrackedChanges.Length -gt 0){
-        Write-Warning "There are untracked stages in source control. Generated document won't be vesioned."
-    }
     $suffix = ''
-    if ($NoVersion -eq $false -and $hasUntrackedChanges.Length -eq 0){
+    if ($NoVersion -eq $false){
         $suffix = "_"
         $version = New-Version -InputDir $InputDir -Draft:$Draft -Revision:$Revision
         
