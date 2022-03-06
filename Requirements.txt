@@ -1,0 +1,12 @@
+- When a new draft or revision is specified in the switches
+    - Build number resets
+    - New draft number will reset revision number to 0 even if revision number is specified
+      - Then a warning whould be displayed that the revision number will be ignored
+- When a new draft or revision is not specified in the switches
+    - Will get draft and revision from disk
+    - If draft is not found, set to 0
+    - If revision is not specified set to 0
+- If NoVersion is specified, Draft and Revision will be ignored
+
+
+Gitflow and semver for books

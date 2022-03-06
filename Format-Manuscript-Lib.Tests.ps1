@@ -130,15 +130,15 @@ Describe 'New-Manuscript' {
         It "Generates a document with a version suffix"{
             $inputDir = ".\testdir"   
             Mock Get-UnstagedUntrackedChanges { "" }
-            Mock New-Version -ParameterFilter { $InputDir -eq $inputDir } { "1.0.0"}
+            Mock New-Version -ParameterFilter { $InputDir -eq $inputDir } { "1.0.1"}
             New-Manuscript $inputDir
-            Should -Invoke -CommandName Invoke-Pandoc -ParameterFilter { $outputFilePath -eq "$inputDir\out\testdir_1.0.0.docx" }
+            Should -Invoke -CommandName Invoke-Pandoc -ParameterFilter { $outputFilePath -like "*1.0.1.docx" }
         }
 
         It "Should not return a warning that a version won't be created for the generated document"{
             $inputDir = ".\testdir"   
             Mock Get-UnstagedUntrackedChanges { "" }
-            Mock New-Version -ParameterFilter { $InputDir -eq $inputDir } { "1.0.0"}
+            Mock New-Version -ParameterFilter { $InputDir -eq $inputDir } { "1.0.1"}
             New-Manuscript $inputDir
             Should -Not -Invoke -CommandName Write-Warning -ParameterFilter { $Message -eq "There are untracked stages in source control. Generated document won't be vesioned." }
         }
@@ -151,9 +151,9 @@ Describe 'New-Manuscript' {
             $inputDir = ".\testdir"   
             $sourceControlDir = "C:\Code\Books\Book_Title"
             Mock Get-UnstagedUntrackedChanges -ParameterFilter { $sourceControlDir -eq $sourceControlDir } { "" }
-            Mock New-Version -ParameterFilter { $InputDir -eq $inputDir } { "1.0.0"}
+            Mock New-Version -ParameterFilter { $InputDir -eq $inputDir } { "1.0.1"}
             New-Manuscript $inputDir -SourceControlDir $sourceControlDir
-            Should -Invoke -CommandName Invoke-Pandoc -ParameterFilter { $outputFilePath -eq "$inputDir\out\testdir_1.0.0.docx" }
+            Should -Invoke -CommandName Invoke-Pandoc -ParameterFilter { $outputFilePath -like "*1.0.1.docx" }
         }
 
         It "Should not return a warning that a version won't be created for the generated document"{
@@ -165,4 +165,45 @@ Describe 'New-Manuscript' {
             Should -Not -Invoke -CommandName Write-Warning -ParameterFilter { $Message -eq "There are untracked stages in source control. Generated document won't be vesioned." }
         }
     }
+
+    Context "When the document has not been versioned before and the Draft and Revision arguments are not specified"{
+        It "Should not give the document a version number"{
+            $inputDir = ".\testdir" 
+            
+            New-Manuscript $inputDir
+
+            Should -Invoke -CommandName Invoke-Pandoc -ParameterFilter { $outputFilePath  -notlike "*1.0*" }
+        }
+    }
+
+    Context "When the Draft and Revision arguments are specified"{
+        It "Should give the document a version number just from Draft and Revision"{
+            $inputDir = ".\testdir" 
+
+            
+
+            New-Manuscript $inputDir -Draft 1 -Revision 0
+            
+            Should -Invoke -CommandName Invoke-Pandoc -ParameterFilter { $outputFilePath  -like "*1.0.1*" }
+        }
+    }
+
+    Context "When the Draft and Revision arguments are specified in one invocation and not in the next"{
+        It "Should keep the Draft and Revision numbers and increase the build number in the second invocation" {
+            $inputDir = ".\testdir"  
+
+            Mock Get-Content -ParameterFilter { $Path -eq "$inputDir\.version\majorMinor" } {"1.1"} 
+            
+            New-Manuscript $inputDir -Draft 1 -Revision 1
+            New-Manuscript $inputDir
+
+            Should -Invoke -CommandName Invoke-Pandoc -ParameterFilter { $outputFilePath  -like "*1.1.0*" }
+            Should -Invoke -CommandName Invoke-Pandoc -ParameterFilter { $outputFilePath  -like "*1.1.1*" }
+        }
+    }
+
+    # Mock Get-Content -ParameterFilter { $Path -eq "$inputDir\.version\majorMinor" } {
+    #     if ($Script:mockCounter -eq 0) {"1.1"} else {"1.1"}
+    # }
+
 }

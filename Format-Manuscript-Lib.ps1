@@ -11,14 +11,23 @@ function Invoke-Pandoc {
 
 function New-Version {
     param(
-		[Parameter()]
-		[string] $InputDir
+		[Parameter(Mandatory)]
+		[string]$InputDir,
+        [int]$Draft,
+        [int]$Revision
 	)
+
+    if ($PSBoundParameters.ContainsKey("Draft") -and $PSBoundParameters.ContainsKey("Revision")){
+        $majorMinor = "$Draft.$Revision"
+    }
+    else {
+        $majorMinor = "1.0"
+    }
 
     # Create structure if it doesn't exist
     $versionDir = "$InputDir\.version"
     $buildFilePath = "$versionDir\build"
-    $versionSetFilePath = "$versionDir\versionset"
+    $majorMinorFilePath = "$versionDir\majorMinor"
 
     if (!(Test-Path $versionDir)) {
         Write-Output "Creating version folder"
@@ -33,24 +42,24 @@ function New-Version {
         $v.Attributes = $v.Attributes -bor [System.IO.FileAttributes]::ReadOnly
     }
 
-    if (!(Test-Path $versionSetFilePath)) {
+    if (!(Test-Path $majorMinorFilePath)) {
         Write-Output "Creating version set file"
-        New-Item -Path $versionSetFilePath -ItemType File -Value "1.0"
+        New-Item -Path $majorMinorFilePath -ItemType File -Value $majorMinor
     }
     
     #Get version and increase the build number
-    $versionPart = Get-Content $versionSetFilePath
+    $versionPart = Get-Content $majorMinorFilePath
     $buildNumber = [int](Get-Content $buildFilePath) + 1
 
     return "$versionPart.$buildNumber"    
 }
 
-function Assert-Start-Of-Chapter {
+function Assert-StartOfChapter {
 	param(
 		[Parameter()]
 		[string] $filePath
 	)
-    Write-Debug "Assert Path $filePath"
+
 	return ((Get-Content $filePath) -join "").StartsWith("# ")
 }
 
@@ -67,6 +76,8 @@ function New-Manuscript{
         [Parameter(Mandatory)]
         [string]$InputDir,
         [string]$sourceControlDir,
+        [int]$Draft,
+        [int]$Revision,
         [switch]$NoVersion
     )
 
@@ -100,14 +111,14 @@ function New-Manuscript{
         Write-Verbose "Processing $($manuscriptFiles[$i].FullName)..."
 
         if ($previousFile -ne '' `
-        -and !(Assert-Start-Of-Chapter($manuscriptFiles[$i].FullName)) `
-        -and !(Assert-Start-Of-Chapter($previousFile)))
+        -and !(Assert-StartOfChapter($manuscriptFiles[$i].FullName)) `
+        -and !(Assert-StartOfChapter($previousFile)))
         {       
             Write-Verbose "$($manuscriptFiles[$i].FullName) is the beginning of a new scene."
             $files.Add($sceneSeparatorFilePath)
         }  
 
-        if (Assert-Start-Of-Chapter($manuscriptFiles[$i].FullName))
+        if (Assert-StartOfChapter($manuscriptFiles[$i].FullName))
         {
             Write-Verbose "$($manuscriptFiles[$i].FullName) is the beginning of a new chapter."
         }   
@@ -122,8 +133,14 @@ function New-Manuscript{
     }
     $suffix = ''
     if ($NoVersion -eq $false -and $hasUntrackedChanges.Length -eq 0){
-        $version = New-Version -InputDir $InputDir
-        $suffix = "_$version"
+        $suffix = "_"
+        $version = New-Version -InputDir $InputDir -Draft:$Draft -Revision:$Revision
+        
+        if ($PSBoundParameters.ContainsKey("Draft") -and $PSBoundParameters.ContainsKey("Revision")){
+            $version = "$Draft.$Revision.0"
+        }
+
+        $suffix = "$suffix$version"
     }
 
     $outputFile = (((Split-Path $inputDir -Leaf) -replace "\.\\", "") -replace "\\", "") + "$suffix.docx"
