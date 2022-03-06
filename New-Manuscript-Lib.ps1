@@ -14,7 +14,10 @@ function Get-SavedVersion {
         [Parameter(Mandatory)]
         [string]$InputDir
     )
-    return Get-Content "$InputDir\.version\version"
+
+    if (Test-Path($inputDir)){
+        return Get-Content "$InputDir\.version\version"
+    }    
 }
 
 function New-Hidden {

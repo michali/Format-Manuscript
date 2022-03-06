@@ -1,6 +1,6 @@
 BeforeAll {
 
-    . .\New-Manuscript-Lib.ps1
+    . $PSScriptRoot\New-Manuscript-Lib.ps1
 
     # Default mocks of commands so the script does not cross application boundaries
     # when tests are running
@@ -283,6 +283,35 @@ Describe "Save Version" {
             Save-Version -InputDir ".\testdir" -Version "1.0.0"
 
             Should -Invoke New-HiddenReadOnly -ParameterFilter { $Path -eq ".\testdir\.version\version" -and $ItemType -eq "File" -and $Content -eq "1.0.0"}            
+        }
+    }
+}
+
+Describe "Get-SavedVersion" {
+    Context "When version data doesn't exist in the system" {
+        It "Should return empty" {
+            $inputDir = ".\testdir"
+          
+            Mock Get-Content
+            Mock Test-Path -ParameterFilter { $InputDir -eq $inputDir } { $false }
+
+            Get-SavedVersion $inputDir
+
+            Should -Invoke Get-Content -Exactly 0
+        }
+    }
+
+    Context "When version data exists in the system" {
+        It "Should return it" {
+            $inputDir = ".\testdir"
+            $versionDir = "$inputDir\.version\version"
+
+            Mock Get-Content -ParameterFilter { $Path -eq $versionDir }
+            Mock Test-Path -ParameterFilter { $InputDir -eq $inputDir } { $true }
+
+            Get-SavedVersion $inputDir
+
+            Should -Invoke Get-Content -ParameterFilter { $Path -eq $versionDir }
         }
     }
 }
