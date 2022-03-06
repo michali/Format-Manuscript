@@ -77,11 +77,10 @@ Describe 'New-Manuscript' {
 
         It "Does not create a version"{
             $inputDir = ".\testdir"      
-            Mock Get-UnstagedUntrackedChanges { "M Changed_file.ps1" }      
             New-Manuscript $inputDir -NoVersion
             Should -Invoke -CommandName Invoke-Pandoc -ParameterFilter { $outputFilePath -eq "$inputDir\out\testdir.docx" }
         }
-    }
+    }    
 }
 
 Describe "Versioning" {  
