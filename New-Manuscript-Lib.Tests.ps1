@@ -103,6 +103,15 @@ Describe 'New-Manuscript' {
 
             Should -Invoke -CommandName Set-SourceControlTag -Exactly 0
         }
+
+        It "Ends the filename with the input dir's name"{
+            $inputDir = ".\testdir"    
+
+            Mock New-Version { "" } 
+
+            New-Manuscript $inputDir
+            Should -Invoke -CommandName Invoke-Pandoc -ParameterFilter { $outputFilePath -eq "$inputDir\out\testdir.docx" }
+        }
     } 
 
     Context "When a directory with the manuscript source files is not provided" {

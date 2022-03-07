@@ -171,7 +171,7 @@ function New-Manuscript{
     $outputDir = "$InputDir\$($config.outputDirPart)"
     $manuscriptDir = "$InputDir\$($config.manuscriptDirPart)"
     $sceneSeparatorFilePath = "$InputDir\$($config.sceneSeparatorFilePath)"
-    
+
     if (!$PSBoundParameters.ContainsKey("SourceControlDir")) {
         $SourceControlDir = ".\"
     }
@@ -217,10 +217,11 @@ function New-Manuscript{
 
     $suffix = ''
     if ($NoVersion -eq $false){
-        $suffix = "_"
+        
         $version = New-Version -InputDir $InputDir -Draft:$Draft -Revision:$Revision -SourceControlDir:$SourceControlDir   
         
         if ($version -ne ""){
+            $suffix = "_"
             Set-SourceControlTag $SourceControlDir $version
         }
         

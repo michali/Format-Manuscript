@@ -1,7 +1,7 @@
 param(
     [Parameter(Mandatory)]
     [string]$InputDir,
-    [string]$sourceControlDir,
+    [string]$SourceControlDir,
     [int]$Draft,
     [int]$Revision,
     [switch]$NoVersion
@@ -9,4 +9,4 @@ param(
 
 . $PSScriptRoot\New-Manuscript-Lib.ps1 
 
-New-Manuscript -InputDir $InputDir -SourceControlDir $sourceControlDir -Draft $Draft -Revision $Revision -NoVersion:$NoVersion 
+New-Manuscript -InputDir $InputDir -SourceControlDir:$SourceControlDir -Draft $Draft -Revision $Revision -NoVersion:$NoVersion 
