@@ -9,4 +9,4 @@ param(
 
 . $PSScriptRoot\New-Manuscript-Lib.ps1 
 
-New-Manuscript -InputDir $InputDir -SourceControlDir:$SourceControlDir -Draft $Draft -Revision $Revision -NoVersion:$NoVersion 
+New-Manuscript @PSBoundParameters

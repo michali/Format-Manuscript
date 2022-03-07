@@ -17,10 +17,8 @@ function Get-SavedVersion {
     $versionDir = "$InputDir\.version\version"
     write-Debug $versionDir
     if (Test-Path($versionDir)){
-        write-Debug 1
         return Get-Content $versionDir
     }
-    write-Debug 2
     return ""    
 }
 
@@ -74,9 +72,10 @@ function New-Version {
         [int]$Revision
 	)
 
-    $hasUntrackedChanges = Get-UnstagedUntrackedChanges -SourceControlDir:$SourceControlDir
+    $unstagedUntrackedChanges = Get-UnstagedUntrackedChanges -SourceControlDir:$SourceControlDir
 
-    if ($hasUntrackedChanges.Length -gt 0){
+    if (($unstagedUntrackedChanges.Length -gt 0 -and $unstagedUntrackedChanges -notlike "*.version/*") `
+     -or ($unstagedUntrackedChanges | Where-Object {$_ -notlike "*.version/*"}).Length -gt 0){
         Write-Warning "There are untracked stages in source control. Generated document won't be vesioned."
         return ""
     }
@@ -143,7 +142,7 @@ function Get-UnstagedUntrackedChanges {
         [Parameter()]
         [string]$SourceControlDir
     )
-    return git -C $SourceControlDir status --porcelain
+    return git -C $SourceControlDir status --porcelain -z
 }
 
 function Set-SourceControlTag {

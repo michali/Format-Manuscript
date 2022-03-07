@@ -154,9 +154,48 @@ Describe "Versioning" {
         It "Should create a default version"{
 
             Mock Get-UnstagedUntrackedChanges { "" }
-            Mock Get-SavedVersion {""}
 
             New-Version $".\testdir" | Should -Be "0.1.1"
+        }
+    }
+
+    Context "When the only untracked change is the version directory" {
+
+        It "Should create a default version"{
+
+            Mock Get-UnstagedUntrackedChanges { "?? ./testdir/.version/" }
+
+            New-Version $".\testdir" | Should -Be "0.1.1"
+        }
+    }
+
+    Context "When the only untracked change is the version file" {
+
+        It "Should create a default version"{
+
+            Mock Get-UnstagedUntrackedChanges { "?? ./testdir/.version/version" }
+
+            New-Version $".\testdir" | Should -Be "0.1.1"
+        }
+    }
+
+    Context "When untracked changes have the version file and other changes" {
+
+        It "Should not create a default version"{
+
+            Mock Get-UnstagedUntrackedChanges { @({"M Changed_file.ps1"}, {"./testdir/.version/version"}, {"M Another_changed_file.ps1"}) }  
+
+            New-Version $".\testdir" | Should -Be ""
+        }
+    }
+
+    Context "When untracked changes have the version directory and other changes" {
+
+        It "Should not create a default version"{
+
+            Mock Get-UnstagedUntrackedChanges { @({"M Changed_file.ps1"}, {"./testdir/.version"}, {"M Another_changed_file.ps1"}) }  
+
+            New-Version $".\testdir" | Should -Be ""
         }
     }
 
