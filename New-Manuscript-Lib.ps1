@@ -15,7 +15,7 @@ function Get-SavedVersion {
         [string]$InputDir
     )
     $versionDir = "$InputDir\.version\version"
-    write-Debug $versionDir
+
     if (Test-Path($versionDir)){
         return Get-Content $versionDir
     }
@@ -33,21 +33,6 @@ function New-Hidden {
     $item.Attributes = $item.Attributes -bor [System.IO.FileAttributes]::Hidden
 }
 
-function New-HiddenReadOnly {
-    param(
-        [Parameter(Mandatory)]
-        [string]$Path,
-        [Parameter(Mandatory)]
-        [string]$ItemType,
-        [Parameter(Mandatory)]
-        [string]$Content
-    )
-
-    $item = New-Item -Path $Path -ItemType $ItemType -Value $Content
-    $item.Attributes = $item.Attributes -bor [System.IO.FileAttributes]::Hidden
-    $item.Attributes = $item.Attributes -bor [System.IO.FileAttributes]::ReadOnly  
-}
-
 function Save-Version {
     param(
         [Parameter(Mandatory)]
@@ -58,9 +43,9 @@ function Save-Version {
     $versionDir = "$InputDir\.version"
    
     if (!(Test-Path $versionDir)) {
-        New-Hidden -Path $versionDir -ItemType Directory
-        New-HiddenReadOnly -Path "$versionDir\version" -ItemType File -Content $Version
+        New-Hidden -Path $versionDir -ItemType Directory      
     }
+    New-Item -Path "$versionDir\version" -ItemType File -Value $Version -Force
 }
 
 function New-Version {
@@ -74,8 +59,11 @@ function New-Version {
 
     $unstagedUntrackedChanges = Get-UnstagedUntrackedChanges -SourceControlDir:$SourceControlDir
 
-    if (($unstagedUntrackedChanges.Length -gt 0 -and $unstagedUntrackedChanges -notlike "*.version/*") `
-     -or ($unstagedUntrackedChanges | Where-Object {$_ -notlike "*.version/*"}).Length -gt 0){
+    $inpurDirWithoutLeadingDirectoryMarker = $InputDir.TrimStart(".\");
+    $allowedUntrackedPattern = "$inpurDirWithoutLeadingDirectoryMarker/.version"
+
+    if ($unstagedUntrackedChanges.Length -gt 0 -and ($unstagedUntrackedChanges -notlike "*$allowedUntrackedPattern*" `
+     -or ($unstagedUntrackedChanges | Where-Object {$_ -notlike "*$allowedUntrackedPattern*"}).Length -gt 0)) {
         Write-Warning "There are untracked stages in source control. Generated document won't be vesioned."
         return ""
     }
@@ -123,8 +111,8 @@ function New-Version {
     
     $version = "$majorMinor.$buildNumber"
 
-    Save-Version $InputDir $version    
-
+    Save-Version $InputDir $version | Out-Null
+    
     return $version
 }
 
@@ -216,11 +204,10 @@ function New-Manuscript{
 
     $suffix = ''
     if ($NoVersion -eq $false){
-        
         $version = New-Version -InputDir $InputDir -Draft:$Draft -Revision:$Revision -SourceControlDir:$SourceControlDir   
         
         if ($version -ne ""){
-            $suffix = "_"
+            $suffix = "_"            
             Set-SourceControlTag $SourceControlDir $version
         }
         
