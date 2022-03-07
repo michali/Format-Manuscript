@@ -130,6 +130,7 @@ Describe "Versioning" {
     
     BeforeAll {        
         Mock Read-Host {"Y"}
+        Mock Save-Version {}
     }
 
     Context "When there are unstaged/untracked changes" {
@@ -155,7 +156,7 @@ Describe "Versioning" {
 
             Mock Get-UnstagedUntrackedChanges { "" }
 
-            New-Version $".\testdir" | Should -Be "0.1.1"
+            New-Version ".\testdir" | Should -Be "0.1.1"
         }
     }
 
@@ -165,7 +166,7 @@ Describe "Versioning" {
 
             Mock Get-UnstagedUntrackedChanges { "?? ./testdir/.version/" }
 
-            New-Version $".\testdir" | Should -Be "0.1.1"
+            New-Version ".\testdir" | Should -Be "0.1.1"
         }
     }
 
@@ -175,7 +176,7 @@ Describe "Versioning" {
 
             Mock Get-UnstagedUntrackedChanges { "?? ./testdir/.version/version" }
 
-            New-Version $".\testdir" | Should -Be "0.1.1"
+            New-Version ".\testdir" | Should -Be "0.1.1"
         }
     }
 
@@ -309,7 +310,6 @@ Describe "Save Version" {
 
     BeforeAll {
         Mock New-Hidden
-        mock New-HiddenReadOnly
     }
 
     Context "When version directory doesn't exist" {
@@ -330,7 +330,18 @@ Describe "Save Version" {
 
             Save-Version -InputDir ".\testdir" -Version "1.0.0"
 
-            Should -Invoke New-HiddenReadOnly -ParameterFilter { $Path -eq ".\testdir\.version\version" -and $ItemType -eq "File" -and $Content -eq "1.0.0"}            
+            Should -Invoke New-Item -ParameterFilter { $Path -eq ".\testdir\.version\version" -and $ItemType -eq "File" -and $Value -eq "1.0.0" -and $Force}            
+        }
+    }
+
+    Context "When version directory exists but version file" {
+        It "The version file should be created or overwritten" {
+
+            Mock Test-Path -ParameterFilter { $Path -eq ".\testdir\.version" } { $true }
+
+            Save-Version -InputDir ".\testdir" -Version "1.0.0"
+
+            Should -Invoke  New-Item -ParameterFilter { $Path -eq ".\testdir\.version\version" -and $ItemType -eq "File" -and $Value -eq "1.0.0" -and $Force}            
         }
     }
 }

@@ -130,7 +130,7 @@ function Get-UnstagedUntrackedChanges {
         [Parameter()]
         [string]$SourceControlDir
     )
-    return git -C $SourceControlDir status --porcelain -z
+    return git -C $SourceControlDir status --porcelain
 }
 
 function Set-SourceControlTag {

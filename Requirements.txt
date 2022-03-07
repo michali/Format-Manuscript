@@ -1,17 +1,5 @@
-- When a new draft or revision is specified in the switches
-    - Build number resets to 1
-    - New draft number will reset revision number to 0 even if revision number is specified
-      - Then a warning whould be displayed that the revision number will be ignored
-- When a new draft or revision is not specified in the switches
-    - Will get draft and revision from disk
-    - If draft is not found, set to 0
-    - If revision is not specified set to 1
-    - Build starts from 1
-- If NoVersion is specified, Draft and Revision will be ignored
+Should only check for untracked changes inside the manuscript folder, other changes don't affect us
 
 
 Gitflow and semver for books
 
-Bugs:
-New-Item for version file should be outside the test-path to check for dir
-$PSBoundParameters.ContainsKey("SourceControlDir") returns true when i run it for real
