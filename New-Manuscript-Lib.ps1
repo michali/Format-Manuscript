@@ -149,11 +149,12 @@ function Get-UnstagedUntrackedChanges {
 
 function Set-SourceControlTag {
     param (
-        [Parameter()]
+        [Parameter(Mandatory)]
         [string]$SourceControlDir,
+        [Parameter(Mandatory)]
         [string]$Tag
     )
-   # return git -C $SourceControlDir status --porcelain
+    git -C $SourceControlDir tag $Tag
 }
 
 function New-Manuscript{
