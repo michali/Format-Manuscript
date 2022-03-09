@@ -184,9 +184,9 @@ Describe "Versioning" {
 
         It "Should not create a default version"{
 
-            Mock Get-UnstagedUntrackedChanges { @({"M Changed_file.ps1"}, {"./testdir/.version/version"}, {"M Another_changed_file.ps1"}) }  
+            Mock Get-UnstagedUntrackedChanges { @({"M Changed_file.ps1"}, {"./testdir/.version/version"}, {"M ./testdir/Another_changed_file.ps1"}) }  
 
-            New-Version $".\testdir" | Should -Be ""
+            New-Version ".\testdir" | Should -Be ""
         }
     }
 
@@ -194,9 +194,9 @@ Describe "Versioning" {
 
         It "Should not create a default version"{
 
-            Mock Get-UnstagedUntrackedChanges { @({"M Changed_file.ps1"}, {"./testdir/.version"}, {"M Another_changed_file.ps1"}) }  
+            Mock Get-UnstagedUntrackedChanges { @({"M Changed_file.ps1"}, {"./testdir/.version"}, {"M ./testdir/Another_changed_file.ps1"}) }  
 
-            New-Version $".\testdir" | Should -Be ""
+            New-Version ".\testdir" | Should -Be ""
         }
     }
 
@@ -286,7 +286,7 @@ Describe "Versioning" {
 
             $version = New-Version ".\testdir" -Draft 2 -Revision 6
 
-            Should -Invoke Read-Host -ParameterFilter { $Prompt -eq "Draft and Revision were both provided but the provided draft number is greater than the revision number of the previous document version. Draft number will be reset to 1. Type Y to proceed."}
+            Should -Invoke Read-Host -ParameterFilter { $Prompt -like "Draft and Revision*"}
             $version | Should -Be "2.1.1"
         }
     }
@@ -300,8 +300,32 @@ Describe "Versioning" {
 
             $version = New-Version ".\testdir" -Draft 2 -Revision 6
 
-            Should -Invoke Read-Host -ParameterFilter { $Prompt -eq "Draft and Revision were both provided but the provided draft number is greater than the revision number of the previous document version. Draft number will be reset to 1. Type Y to proceed."}
+            Should -Invoke Read-Host -ParameterFilter { $Prompt -like "Draft and Revision*"}
             $version | Should -Be ""
+        }
+    }
+
+    Context "When only a Revision is provided"{
+        It "The draft number should not change" {
+            $Script:mockCounter = 0; 
+
+            Mock Get-SavedVersion { "1.5.1" }                
+            
+            $version = New-Version ".\testdir" -Revision 6
+
+            $version | Should -BeLike "1.6*"
+        }
+    }
+
+    Context "When only a Revision is provided and it is greater than the previous revision"{
+        It "The build number should reset" {
+            $Script:mockCounter = 0; 
+
+            Mock Get-SavedVersion { "1.5.1" }
+
+            $version = New-Version ".\testdir" -Revision 6
+
+            $version | Should -BeLike "*6.1"
         }
     }
 }

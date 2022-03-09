@@ -84,17 +84,31 @@ function New-Version {
         $savedDraft = $savedVersionParts[0]
         $savedRevision = $savedVersionParts[1]
         $savedBuild = $savedVersionParts[2]
-        if ($PSBoundParameters.ContainsKey("Draft") -or $PSBoundParameters.ContainsKey("Revision")){
+
+        if ($PSBoundParameters.ContainsKey("Draft") -and $PSBoundParameters.ContainsKey("Revision")){
             if ($Draft -gt $savedDraft){
-                $continue = Read-Host "Draft and Revision were both provided but the provided draft number is greater than the revision number of the previous document version. Draft number will be reset to 1. Type Y to proceed."
+                $continue = Read-Host "Draft and Revision were both provided but the provided draft number is greater than the draft number of the previous document version. Revision number will be reset to 1. Type Y to proceed."
                 
                 if ($continue -ne "Y"){
                     return "";
                 }
-                $Revision = "1"
-                $buildNumber = 1
-            } else {
+            }
+        }
+
+        if ($PSBoundParameters.ContainsKey("Draft") -or $PSBoundParameters.ContainsKey("Revision")){            
+            
+            if (!$PSBoundParameters.ContainsKey("Draft")){
+                $Draft = $savedDraft   
                 if ($Revision -gt $savedRevision){
+                    $buildNumber = 1
+                }             
+            }
+            else {
+                if ($Draft  -gt $savedDraft) {
+                    $Revision = 1
+                    $buildNumber = 1
+                }
+                elseif ($Revision -gt $savedRevision){
                     $buildNumber = 1
                 }
                 else {
