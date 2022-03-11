@@ -115,7 +115,7 @@ function Get-UnstagedUntrackedChanges {
         [Parameter()]
         [string]$SourceControlDir
     )
-    return git -C $SourceControlDir status --porcelain
+    return git -C ($SourceControlDir -replace "\\", "/") status --porcelain
 }
 
 function Set-SourceControlTag {
@@ -199,7 +199,7 @@ function New-Manuscript{
 
     $suffix = ''
     if ($NoVersion -eq $false){
-        $version = New-Version -InputDir $InputDir -Draft $Draft -Revision $Revision
+        $version = New-Version @PSBoundParameters
         
         if ($version -ne ""){
             $suffix = "_"            

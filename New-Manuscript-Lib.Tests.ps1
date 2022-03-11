@@ -294,18 +294,18 @@ Describe "Get-SavedVersion" {
     Context "When version data doesn't exist in the system" {
         It "Should return empty" {
 
-            Mock Get-LatestVersion {""}
+            Mock Get-LatestVersionTag { $null }
 
             Get-SavedVersion -InputDir ".\" | should -Be ""            
         }
     }
 
-    Context "When version data doesn't exist in the system" {
-        It "Should return empty" {
+    Context "When version data exists in the system" {
+        It "Should return version" {
 
-            Mock Get-LatestVersion {"v1.0"}
+            Mock Get-LatestVersionTag {"abcd tag    refs/tags/v1.0.0"}
 
-            Get-SavedVersion -InputDir ".\" | should -Be "1.0"            
+            Get-SavedVersion -InputDir ".\" | should -Be "1.0.0"            
         }
     }
 }
