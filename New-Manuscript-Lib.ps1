@@ -9,61 +9,30 @@ function Invoke-Pandoc {
     & 'pandoc' $files --top-level-division=chapter --reference-doc=$referenceDocPath -o $outputFilePath
 }
 
+function Get-LatestVersion {
+    return git for-each-ref --sort=-taggerdate --count=1  refs/tags/v*
+}
+
 function Get-SavedVersion {
     param(
         [Parameter(Mandatory)]
         [string]$InputDir
     )
-    $versionDir = "$InputDir\.version\version"
-
-    if (Test-Path($versionDir)){
-        return Get-Content $versionDir
-    }
-    return ""    
-}
-
-function New-Hidden {
-    param(
-        [Parameter(Mandatory)]
-        [string]$Path,
-        [Parameter(Mandatory)]
-        [string]$ItemType
-    )
-    $item = New-Item -Path $Path -ItemType $ItemType
-    $item.Attributes = $item.Attributes -bor [System.IO.FileAttributes]::Hidden
-}
-
-function Save-Version {
-    param(
-        [Parameter(Mandatory)]
-        [string]$InputDir,
-        [Parameter(Mandatory)]
-        [string]$Version
-    )
-    $versionDir = "$InputDir\.version"
-   
-    if (!(Test-Path $versionDir)) {
-        New-Hidden -Path $versionDir -ItemType Directory      
-    }
-    New-Item -Path "$versionDir\version" -ItemType File -Value $Version -Force
+       
+    (Get-LatestVersion $InputDir).TrimStart('v')
 }
 
 function New-Version {
     param(
 		[Parameter(Mandatory)]
 		[string]$InputDir,
-        [string]$SourceControlDir,
         [int]$Draft,
         [int]$Revision
 	)
 
-    $unstagedUntrackedChanges = Get-UnstagedUntrackedChanges -SourceControlDir:$SourceControlDir
+    $unstagedUntrackedChanges = Get-UnstagedUntrackedChanges -SourceControlDir $InputDir
 
-    $inpurDirWithoutLeadingDirectoryMarker = $InputDir.TrimStart(".\");
-    $allowedUntrackedPattern = "$inpurDirWithoutLeadingDirectoryMarker/.version"
-
-    if ($unstagedUntrackedChanges.Length -gt 0 -and ($unstagedUntrackedChanges -notlike "*$allowedUntrackedPattern*" `
-     -or ($unstagedUntrackedChanges | Where-Object {$_ -notlike "*$allowedUntrackedPattern*"}).Length -gt 0)) {
+    if ($unstagedUntrackedChanges.Length -gt 0) {
         Write-Warning "There are untracked stages in source control. Generated document won't be vesioned."
         return ""
     }
@@ -123,11 +92,7 @@ function New-Version {
         }
     }
     
-    $version = "$majorMinor.$buildNumber"
-
-    Save-Version $InputDir $version | Out-Null
-    
-    return $version
+    return "$majorMinor.$buildNumber"
 }
 
 function Assert-StartOfChapter {
@@ -152,16 +117,29 @@ function Set-SourceControlTag {
         [Parameter(Mandatory)]
         [string]$SourceControlDir,
         [Parameter(Mandatory)]
-        [string]$Tag
+        [string]$Tag,
+        [Parameter(Mandatory)]
+        [string]$Message
     )
-    git -C $SourceControlDir tag $Tag
+
+    git -C $SourceControlDir tag -a $Tag -m $Message
+}
+
+function Save-Version {
+    param (
+        [Parameter(Mandatory)]
+        [string]$InputDir,
+        [Parameter(Mandatory)]
+        [string]$Version
+    )
+
+    Set-SourceControlTag $InputDir "v$version" "Version $version"
 }
 
 function New-Manuscript{
     param(
         [Parameter(Mandatory)]
         [string]$InputDir,
-        [string]$SourceControlDir,
         [int]$Draft,
         [int]$Revision,
         [switch]$NoVersion
@@ -173,10 +151,6 @@ function New-Manuscript{
     $outputDir = "$InputDir\$($config.outputDirPart)"
     $manuscriptDir = "$InputDir\$($config.manuscriptDirPart)"
     $sceneSeparatorFilePath = "$InputDir\$($config.sceneSeparatorFilePath)"
-
-    if (!$PSBoundParameters.ContainsKey("SourceControlDir")) {
-        $SourceControlDir = ".\"
-    }
 
     If (!(Test-Path $inputDir))
     {
@@ -219,11 +193,11 @@ function New-Manuscript{
 
     $suffix = ''
     if ($NoVersion -eq $false){
-        $version = New-Version -InputDir $InputDir -Draft:$Draft -Revision:$Revision -SourceControlDir:$SourceControlDir   
+        $version = New-Version -InputDir $InputDir -Draft $Draft -Revision $Revision
         
         if ($version -ne ""){
             $suffix = "_"            
-            Set-SourceControlTag $SourceControlDir $version
+            Save-Version $InputDir $version
         }
         
         $suffix = "$suffix$version"

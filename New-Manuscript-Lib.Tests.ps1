@@ -19,9 +19,8 @@ Describe 'New-Manuscript' {
         Mock Invoke-Pandoc {}     
         Mock Copy-Item {}   
         Mock Get-ChildItem {  @() } 
-        Mock Save-Version
         Mock New-Version {""}
-        Mock Set-SourceControlTag {}
+        Mock Save-Version { }
     }
 
     Context "When the output dir doesn't exist" {
@@ -85,12 +84,12 @@ Describe 'New-Manuscript' {
         
     Context "When a version is created" {
 
-        It "Tags the head of the source control"{
+        It "Sets the version"{
             Mock New-Version { "1.0.0" } 
 
             New-Manuscript ".\testdir"
 
-            Should -Invoke -CommandName Set-SourceControlTag -ParameterFilter { $Tag -eq "1.0.0" }
+            Should -Invoke -CommandName Save-Version -ParameterFilter {$InputDir -eq ".\testdir" -and $Version -eq "1.0.0" }
         }
     }
     
@@ -101,7 +100,7 @@ Describe 'New-Manuscript' {
 
             New-Manuscript ".\testdir"
 
-            Should -Invoke -CommandName Set-SourceControlTag -Exactly 0
+            Should -Invoke -CommandName Save-Version -Exactly 0
         }
 
         It "Ends the filename with the input dir's name"{
@@ -117,11 +116,11 @@ Describe 'New-Manuscript' {
     Context "When a directory with the manuscript source files is not provided" {
 
         It "Should use the current directory as the source control directory"{
-            Mock New-Version { "1.1.0" } 
+            Mock New-Version { "1.0.0" } 
 
             New-Manuscript ".\testdir"
 
-            Should -Invoke -CommandName Set-SourceControlTag -ParameterFilter { $SourceControlDir -eq ".\"}
+            Should -Invoke -CommandName Save-Version -ParameterFilter {$InputDir -eq ".\testdir" -and $Version -eq "1.0.0" }
         }
     } 
 }
@@ -130,7 +129,6 @@ Describe "Versioning" {
     
     BeforeAll {        
         Mock Read-Host {"Y"}
-        Mock Save-Version {}
     }
 
     Context "When there are unstaged/untracked changes" {
@@ -155,48 +153,9 @@ Describe "Versioning" {
         It "Should create a default version"{
 
             Mock Get-UnstagedUntrackedChanges { "" }
+            Mock Get-SavedVersion {""}
 
             New-Version ".\testdir" | Should -Be "0.1.1"
-        }
-    }
-
-    Context "When the only untracked change is the version directory" {
-
-        It "Should create a default version"{
-
-            Mock Get-UnstagedUntrackedChanges { "?? ./testdir/.version/" }
-
-            New-Version ".\testdir" | Should -Be "0.1.1"
-        }
-    }
-
-    Context "When the only untracked change is the version file" {
-
-        It "Should create a default version"{
-
-            Mock Get-UnstagedUntrackedChanges { "?? ./testdir/.version/version" }
-
-            New-Version ".\testdir" | Should -Be "0.1.1"
-        }
-    }
-
-    Context "When untracked changes have the version file and other changes" {
-
-        It "Should not create a default version"{
-
-            Mock Get-UnstagedUntrackedChanges { @({"M Changed_file.ps1"}, {"./testdir/.version/version"}, {"M ./testdir/Another_changed_file.ps1"}) }  
-
-            New-Version ".\testdir" | Should -Be ""
-        }
-    }
-
-    Context "When untracked changes have the version directory and other changes" {
-
-        It "Should not create a default version"{
-
-            Mock Get-UnstagedUntrackedChanges { @({"M Changed_file.ps1"}, {"./testdir/.version"}, {"M ./testdir/Another_changed_file.ps1"}) }  
-
-            New-Version ".\testdir" | Should -Be ""
         }
     }
 
@@ -330,70 +289,23 @@ Describe "Versioning" {
     }
 }
 
-Describe "Save Version" {
-
-    BeforeAll {
-        Mock New-Hidden
-    }
-
-    Context "When version directory doesn't exist" {
-        It "Should be created" {
-
-            Mock Test-Path -ParameterFilter { $Path -eq ".\testdir\.version" } { $false }
-           
-            Save-Version -InputDir ".\testdir" -Version "1.0.0"
-
-            Should -Invoke New-Hidden -ParameterFilter { $Path -eq ".\testdir\.version" -and $ItemType -eq "Directory"}
-        }
-    }
-
-    Context "When version file doesn't exist" {
-        It "Should be created" {
-
-            Mock Test-Path -ParameterFilter { $Path -eq ".\testdir\.version" } { $false }
-
-            Save-Version -InputDir ".\testdir" -Version "1.0.0"
-
-            Should -Invoke New-Item -ParameterFilter { $Path -eq ".\testdir\.version\version" -and $ItemType -eq "File" -and $Value -eq "1.0.0" -and $Force}            
-        }
-    }
-
-    Context "When version directory exists but version file" {
-        It "The version file should be created or overwritten" {
-
-            Mock Test-Path -ParameterFilter { $Path -eq ".\testdir\.version" } { $true }
-
-            Save-Version -InputDir ".\testdir" -Version "1.0.0"
-
-            Should -Invoke  New-Item -ParameterFilter { $Path -eq ".\testdir\.version\version" -and $ItemType -eq "File" -and $Value -eq "1.0.0" -and $Force}            
-        }
-    }
-}
-
 Describe "Get-SavedVersion" {
+
     Context "When version data doesn't exist in the system" {
         It "Should return empty" {
-            $inputDir = ".\testdir"
-            $versionDir = "$testdir\.version\version"
-          
-            Mock Get-Content
-            Mock Test-Path -ParameterFilter { $Path -eq $versionDir } { $false }
 
-            Get-SavedVersion $inputDir | Should -Be ""
+            Mock Get-LatestVersion {""}
 
-            Should -Invoke Get-Content -Exactly 0
+            Get-SavedVersion -InputDir ".\" | should -Be ""            
         }
     }
 
-    Context "When version data exists in the system" {
-        It "Should return it" {
-            $inputDir = ".\testdir"
-            $versionDir = "$inputDir\.version\version"
+    Context "When version data doesn't exist in the system" {
+        It "Should return empty" {
 
-            Mock Get-Content -ParameterFilter { $Path -eq $versionDir } {"123"}
-            Mock Test-Path -ParameterFilter { $InputDir -eq $versionDir } { $true }
+            Mock Get-LatestVersion {"v1.0"}
 
-            Get-SavedVersion $inputDir | Should -Be "123"
+            Get-SavedVersion -InputDir ".\" | should -Be "1.0"            
         }
     }
 }
