@@ -9,7 +9,7 @@ function Invoke-Pandoc {
     & 'pandoc' $files --top-level-division=chapter --reference-doc=$referenceDocPath -o $outputFilePath
 }
 
-function Get-LatestVersion {
+function Get-LatestVersionTag {
     return git for-each-ref --sort=-taggerdate --count=1  refs/tags/v*
 }
 
@@ -18,8 +18,15 @@ function Get-SavedVersion {
         [Parameter(Mandatory)]
         [string]$InputDir
     )
-       
-    (Get-LatestVersion $InputDir).TrimStart('v')
+     
+    $version = Get-LatestVersionTag $InputDir
+
+    if ($version) {
+        $mc = [regex]::matches($version, "v\d\.\d\.\d")
+        return $mc.groups[0].value.TrimStart("v")
+    }
+
+    return ""
 }
 
 function New-Version {
@@ -65,7 +72,6 @@ function New-Version {
         }
 
         if ($PSBoundParameters.ContainsKey("Draft") -or $PSBoundParameters.ContainsKey("Revision")){            
-            
             if (!$PSBoundParameters.ContainsKey("Draft")){
                 $Draft = $savedDraft   
                 if ($Revision -gt $savedRevision){
