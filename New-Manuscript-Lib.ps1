@@ -176,7 +176,7 @@ function New-Manuscript{
     $files = New-Object Collections.Generic.List[String]
     $previousFile = ''
 
-    for ($i = 0; $i -lt $manuscriptFiles.Length; $i++)
+    for ($i = 0; $i -lt $manuscriptFiles.Count; $i++)
     {
         Write-Verbose "Processing $($manuscriptFiles[$i].FullName)..."
 

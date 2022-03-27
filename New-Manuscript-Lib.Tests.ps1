@@ -73,6 +73,17 @@ Describe 'New-Manuscript' {
         }
     }
 
+    Context "When only one file can go to the draft" {
+        It "The file goes to the draft" {
+            $inputDir = ".\testdir"            
+            Mock Get-ChildItem -ParameterFilter {  $Path -eq "$inputDir\_Manuscript" } -MockWith { @([PSCustomObject]@{Name="scene1.md"; FullName="$inputDir\_Manuscript\scene1.md"} ) }
+
+            New-Manuscript $inputDir
+            
+            Should -Invoke -CommandName Invoke-Pandoc
+        }
+    }
+
     Context "When specifying not to version the manuscript" {
 
         It "Does not create a version"{
