@@ -2,40 +2,35 @@ BeforeAll {
 
     # Default mocks of commands so the script does not cross application boundaries
     # when tests are running
-    Mock New-Item
-    Mock Test-Path { $true }
-    Mock Write-Output { }
-    Mock Get-Content {""}
-    function Invoke-Pandoc {}  
-    function New-Version {}   
-    function Save-Version {} 
-    Function Get-UnstagedUntrackedChanges {""}
-    Mock Get-UnstagedUntrackedChanges {""}
-    Mock Write-Warning
-    Mock Get-Content -ParameterFilter {$Path -eq "$PSScriptRoot\config.json"} { "{""outputDirPart"": ""out"", ""manuscriptDirPart"": ""_Manuscript"", ""sceneSeparatorFilePath"": ""Templates\\Scene separator.md""}" }
+    Import-Module .\New-Manuscript
+    Mock -ModuleName New-Manuscript New-Item
+    Mock -ModuleName New-Manuscript Test-Path { $true }
+    Mock -ModuleName New-Manuscript Write-Output { }
+    Mock -ModuleName New-Manuscript Get-Content {""}
+    Mock -ModuleName New-Manuscript Write-Warning
+    Mock -ModuleName New-Manuscript Get-Content -ParameterFilter {$Path -eq "$PSScriptRoot\config.json"} { "{""outputDirPart"": ""out"", ""manuscriptDirPart"": ""_Manuscript"", ""sceneSeparatorFilePath"": ""Templates\\Scene separator.md""}" }
 }
 
 Describe 'New-Manuscript' {
 
-    BeforeAll {    
-       
-        Mock Invoke-Pandoc {}     
-        Mock Copy-Item {}   
-        Mock Get-ChildItem {  @() } 
-        Mock New-Version {""}
-        Mock Save-Version { }
+    BeforeAll {                    
+        Mock -ModuleName New-Manuscript Copy-Item {}   
+        Mock -ModuleName New-Manuscript Get-ChildItem {  @() } 
+        Mock -ModuleName New-Manuscript Invoke-Pandoc {}    
+        Mock -ModuleName New-Manuscript New-Version {""}
+        Mock -ModuleName New-Manuscript Save-Version { }
     }
 
     Context "When the output dir doesn't exist" {
 
         It "Creates the output dir" {
             $outputDir = ".\testdir\out"
-
-            Mock Test-Path -ParameterFilter {  $Path -eq $outputDir }  { $false }
+            
+            Mock -ModuleName New-Manuscript Test-Path -ParameterFilter {  $Path -eq $outputDir }  { $false }
            
             .\New-Manuscript.ps1 ".\testdir"
 
-            Should -Invoke -CommandName New-Item -ParameterFilter { $ItemType -eq "Directory" -and $Path -eq $outputDir }
+            Should -Invoke -CommandName New-Item -ModuleName New-Manuscript -ParameterFilter { $ItemType -eq "Directory" -and $Path -eq $outputDir }
          }
     }
 
@@ -44,145 +39,152 @@ Describe 'New-Manuscript' {
         It "Exits with error" {
             $inputDir = ".\testdir"
 
-            Mock Test-Path -ParameterFilter {  $Path -eq $inputDir }  { $false }     
+            Mock -ModuleName New-Manuscript Test-Path -ParameterFilter {  $Path -eq $inputDir }  { $false }     
     
-            {.\New-Manuscript.ps1 $inputDir} | Should -Throw          
+            {.\New-Manuscript.ps1 $inputDir} | Should -Throw      
          }
     }
 
     Context "When Checking the manuscript files" {
         
-        # It "Injects a scene separator between scenes based on the markdown in the files" {            
-        #     $inputDir = ".\testdir"            
-        #     Mock Get-ChildItem -ParameterFilter {  $Path -eq "$inputDir\_Manuscript" } -MockWith { @([PSCustomObject]@{Name="scene1.md"; FullName="$inputDir\_Manuscript\scene1.md"},[PSCustomObject]@{Name="scene2.md"; FullName="$inputDir\_Manuscript\scene2.md"} ) }
-        #     Mock Get-Content -ParameterFilter { $Path -eq "$inputDir\_Manuscript\scene1.md" } { "" }
-        #     Mock Get-Content -ParameterFilter { $Path -eq "$inputDir\_Manuscript\scene2.md" } { "" }
-
-        #     .\New-Manuscript.ps1 $inputDir
-            
-        #     Should -Invoke -CommandName Invoke-Pandoc -ParameterFilter { $files[0] -eq "$inputDir\_Manuscript\scene1.md" }
-        #     Should -Invoke -CommandName Invoke-Pandoc -ParameterFilter { $files[1] -eq "$inputDir\Templates\Scene separator.md" }
-        #     Should -Invoke -CommandName Invoke-Pandoc -ParameterFilter { $files[2] -eq "$inputDir\_Manuscript\scene2.md" }
-        # }
-
-        It "Creates a draft in the expected path" {            
+        It "Injects a scene separator between scenes based on the markdown in the files" {            
             $inputDir = ".\testdir"            
-            Mock Get-ChildItem -ParameterFilter {  $Path -eq "$inputDir\_Manuscript" } -MockWith { @([PSCustomObject]@{Name="scene1.md"; FullName="$inputDir\_Manuscript\scene1.md"},[PSCustomObject]@{Name="scene2.md"; FullName="$inputDir\_Manuscript\scene2.md"} ) }
-            Mock Get-Content -ParameterFilter { $Path -eq "$inputDir\_Manuscript\scene1.md" } { "" }
-            Mock Get-Content -ParameterFilter { $Path -eq "$inputDir\_Manuscript\scene2.md" } { "" }
-            Mock New-Version -ParameterFilter { $InputDir -eq $inputDir } { "1.0.0" } 
+            Mock -ModuleName New-Manuscript Get-ChildItem -ParameterFilter {  $Path -eq "$inputDir\_Manuscript" } -MockWith { @([PSCustomObject]@{Name="scene1.md"; FullName="$inputDir\_Manuscript\scene1.md"},[PSCustomObject]@{Name="scene2.md"; FullName="$inputDir\_Manuscript\scene2.md"} ) }
+            Mock -ModuleName New-Manuscript Get-Content -ParameterFilter { $Path -eq "$inputDir\_Manuscript\scene1.md" } { "" }
+            Mock -ModuleName New-Manuscript Get-Content -ParameterFilter { $Path -eq "$inputDir\_Manuscript\scene2.md" } { "" }
 
             .\New-Manuscript.ps1 $inputDir
             
-            Should -Invoke -CommandName Invoke-Pandoc -ParameterFilter { $outputFilePath -eq ".\testdir\out\testdir_1.0.0.docx" }
+            Should -Invoke -CommandName Invoke-Pandoc -ModuleName New-Manuscript -ParameterFilter { $files[0] -eq "$inputDir\_Manuscript\scene1.md" }
+            Should -Invoke -CommandName Invoke-Pandoc -ModuleName New-Manuscript -ParameterFilter { $files[1] -eq "$inputDir\Templates\Scene separator.md" }
+            Should -Invoke -CommandName Invoke-Pandoc -ModuleName New-Manuscript -ParameterFilter { $files[2] -eq "$inputDir\_Manuscript\scene2.md" }
+        }
+
+        It "Creates a draft in the expected path" {            
+            $inputDir = ".\testdir"            
+            Mock -ModuleName New-Manuscript Get-ChildItem -ParameterFilter {  $Path -eq "$inputDir\_Manuscript" } -MockWith { @([PSCustomObject]@{Name="scene1.md"; FullName="$inputDir\_Manuscript\scene1.md"},[PSCustomObject]@{Name="scene2.md"; FullName="$inputDir\_Manuscript\scene2.md"} ) }
+            Mock -ModuleName New-Manuscript Get-Content -ParameterFilter { $Path -eq "$inputDir\_Manuscript\scene1.md" } { "" }
+            Mock -ModuleName New-Manuscript Get-Content -ParameterFilter { $Path -eq "$inputDir\_Manuscript\scene2.md" } { "" }
+            Mock -ModuleName New-Manuscript New-Version -ParameterFilter { $InputDir -eq $inputDir } { "1.0.0" } 
+
+            .\New-Manuscript.ps1 $inputDir
+            
+            Should -Invoke -CommandName Invoke-Pandoc -ModuleName New-Manuscript -ParameterFilter { $outputFilePath -eq ".\testdir\out\testdir_1.0.0.docx" }
         }
     }
 
-    # Context "When only one file can go to the draft" {
-    #     It "The file goes to the draft" {
-    #         $inputDir = ".\testdir"            
-    #         Mock Get-ChildItem -ParameterFilter {  $Path -eq "$inputDir\_Manuscript" } -MockWith { @([PSCustomObject]@{Name="scene1.md"; FullName="$inputDir\_Manuscript\scene1.md"} ) }
+    Context "When only one file can go to the draft" {
+        It "The file goes to the draft" {
+            $inputDir = ".\testdir"            
+            Mock -ModuleName New-Manuscript Get-ChildItem -ParameterFilter {  $Path -eq "$inputDir\_Manuscript" } -MockWith { @([PSCustomObject]@{Name="scene1.md"; FullName="$inputDir\_Manuscript\scene1.md"} ) }
 
-    #         .\New-Manuscript.ps1 $inputDir
+            .\New-Manuscript.ps1 $inputDir
             
-    #         Should -Invoke -CommandName Invoke-Pandoc
-    #     }
-    # }
+            Should -Invoke -CommandName Invoke-Pandoc -ModuleName New-Manuscript
+        }
+    }
 
-    # Context "When specifying not to version the manuscript" {
+    Context "When specifying not to version the manuscript" {
 
-    #     It "Does not create a version"{
-    #         $inputDir = ".\testdir"      
-    #         .\New-Manuscript.ps1 $inputDir -NoVersion
-    #         Should -Invoke -CommandName Invoke-Pandoc -ParameterFilter { $outputFilePath -eq "$inputDir\out\testdir.docx" }
-    #     }
-    # }   
+        It "Does not create a version"{
+            $inputDir = ".\testdir"      
+            .\New-Manuscript.ps1 $inputDir -NoVersion
+            Should -Invoke -CommandName Invoke-Pandoc -ModuleName New-Manuscript -ParameterFilter { $outputFilePath -eq "$inputDir\out\testdir.docx" }
+        }
+    }   
         
-    # Context "When a version is created" {
+    Context "When a version is created" {
 
-    #     It "Sets the version"{
-    #         Mock New-Version { "1.0.0" } 
+        It "Sets the version"{
+            Mock -ModuleName New-Manuscript New-Version { "1.0.0" } 
 
-    #         .\New-Manuscript.ps1 ".\testdir"
+            .\New-Manuscript.ps1 ".\testdir"
 
-    #         Should -Invoke -CommandName Save-Version -ParameterFilter {$InputDir -eq ".\testdir" -and $Version -eq "1.0.0" }
-    #     }
-    # }
+            Should -Invoke -CommandName Save-Version -ModuleName New-Manuscript -ParameterFilter {$InputDir -eq ".\testdir" -and $Version -eq "1.0.0" }
+        }
+    }
     
-    # Context "When a version is not created" {
+    Context "When a version is not created" {
 
-    #     It "Does not tag the head of the source control"{
-    #         Mock New-Version { "" } 
+        It "Does not tag the head of the source control"{
+            Mock -ModuleName New-Manuscript New-Version { "" } 
 
-    #         .\New-Manuscript.ps1 ".\testdir"
+            .\New-Manuscript.ps1 ".\testdir"
 
-    #         Should -Invoke -CommandName Save-Version -Exactly 0
-    #     }
+            Should -Invoke -CommandName Save-Version  -ModuleName New-Manuscript -Exactly 0
+        }
 
-    #     It "Ends the filename with the input dir's name"{
-    #         $inputDir = ".\testdir"    
+        It "Ends the filename with the input dir's name"{
+            $inputDir = ".\testdir"    
 
-    #         Mock New-Version { "" } 
+            Mock -ModuleName New-Manuscript New-Version { "" } 
 
-    #         .\New-Manuscript.ps1 $inputDir
-    #         Should -Invoke -CommandName Invoke-Pandoc -ParameterFilter { $outputFilePath -eq "$inputDir\out\testdir.docx" }
-    #     }
-    # } 
+            .\New-Manuscript.ps1 $inputDir
+            Should -Invoke -CommandName Invoke-Pandoc -ModuleName New-Manuscript -ParameterFilter { $outputFilePath -eq "$inputDir\out\testdir.docx" }
+        }
+    } 
 
-    # Context "When a directory with the manuscript source files is not provided" {
+    Context "When a directory with the manuscript source files is not provided" {
 
-    #     It "Should use the current directory as the source control directory"{
-    #         Mock New-Version { "1.0.0" } 
+        It "Should use the current directory as the source control directory"{
+            Mock -ModuleName New-Manuscript New-Version { "1.0.0" } 
 
-    #         .\New-Manuscript.ps1 ".\testdir"
+            .\New-Manuscript.ps1 ".\testdir"
 
-    #         Should -Invoke -CommandName Save-Version -ParameterFilter {$InputDir -eq ".\testdir" -and $Version -eq "1.0.0" }
-    #     }
-    # } 
+            Should -Invoke -CommandName Save-Version -ModuleName New-Manuscript -ParameterFilter {$InputDir -eq ".\testdir" -and $Version -eq "1.0.0" }
+        }
+    } 
 }
 
-# Describe "Versioning" {  
+ Describe "Versioning" {  
     
-#     BeforeAll {        
-#         Mock Read-Host {"Y"}
-#     }
+    BeforeAll {        
+        Mock -ModuleName New-Manuscript Read-Host {"Y"}
+    }
 
-#     Context "When there are unstaged/untracked changes" {
+    Context "When there are unstaged/untracked changes" {
 
-#         It "Should not create a default version"{   
-#             Mock Get-UnstagedUntrackedChanges { "M Changed_file.ps1" }   
+        It "Should not create a default version"{   
+            InModuleScope New-Manuscript {
+                Mock Get-UnstagedUntrackedChanges { "M Changed_file.ps1" }   
 
-#             New-Version ".\testdir" | Should -Be ""
-#         }
+                New-Version ".\testdir" | Should -Be ""
+            }
+        }
 
-#         It "Should return a warning that a version won't be created for the generated document"{
-#             Mock Get-UnstagedUntrackedChanges { "M Changed_file.ps1" }
+        It "Should return a warning that a version won't be created for the generated document"{
+            InModuleScope New-Manuscript {
+                Mock Get-UnstagedUntrackedChanges { "M Changed_file.ps1" }
 
-#             New-Version ".\testdir" 
+                New-Version ".\testdir" 
 
-#             Should -Invoke -CommandName Write-Warning -ParameterFilter { $Message -eq "There are untracked stages in source control. Generated document won't be vesioned." }
-#         }
-#     }    
+                Should -Invoke -CommandName Write-Warning -ParameterFilter { $Message -eq "There are untracked stages in source control. Generated document won't be vesioned." }
+             }    
+        }
+    }    
 
-#     Context "When there are no unstaged/untracked changes" {
+    Context "When there are no unstaged/untracked changes" {
 
-#         It "Should create a default version"{
+        It "Should create a default version"{
+            InModuleScope New-Manuscript {
+                Mock Get-UnstagedUntrackedChanges { "" }
+                Mock Get-SavedVersion {""}
 
-#             Mock Get-UnstagedUntrackedChanges { "" }
-#             Mock Get-SavedVersion {""}
+                New-Version ".\testdir" | Should -Be "0.1.1"
+            }
+        }
+    }
 
-#             New-Version ".\testdir" | Should -Be "0.1.1"
-#         }
-#     }
+    Context "When the Draft and Revision arguments are specified"{
+        It "Should create a version number in the format of Draft.Revision.1 where 1 is the build number"{
+            InModuleScope New-Manuscript {
+                Mock Get-UnstagedUntrackedChanges { "" }
+                Mock Get-SavedVersion {""}
 
-#     Context "When the Draft and Revision arguments are specified"{
-#         It "Should create a version number in the format of Draft.Revision.1 where 1 is the build number"{
-
-#             Mock Get-SavedVersion {""}
-
-#             New-Version ".\testdir" -Draft 1 -Revision 0 | Should -Be "1.0.1"
-#         }
-#     }
+                New-Version ".\testdir" -Draft 1 -Revision 0 | Should -Be "1.0.1"
+            }
+        }
+    }
 
 #     Context "When call to versioning is executed thrice"{
 #         It "Draft and Revision numbers should remain the same and the build number should increment" {
@@ -303,7 +305,7 @@ Describe 'New-Manuscript' {
 #             $version | Should -BeLike "*6.1"
 #         }
 #     }
-# }
+}
 
 # Describe "Get-SavedVersion" {
 
