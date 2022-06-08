@@ -139,7 +139,8 @@ Describe 'New-Manuscript' {
  Describe "Versioning" {  
     
     BeforeAll {        
-        Mock -ModuleName New-Manuscript Read-Host {"Y"}
+        Mock -ModuleName New-Manuscript Read-Host {"Y"}        
+        Mock -ModuleName New-Manuscript Get-UnstagedUntrackedChanges { "" }
     }
 
     Context "When there are unstaged/untracked changes" {
@@ -167,7 +168,6 @@ Describe 'New-Manuscript' {
 
         It "Should create a default version"{
             InModuleScope New-Manuscript {
-                Mock Get-UnstagedUntrackedChanges { "" }
                 Mock Get-SavedVersion {""}
 
                 New-Version ".\testdir" | Should -Be "0.1.1"
@@ -178,7 +178,6 @@ Describe 'New-Manuscript' {
     Context "When the Draft and Revision arguments are specified"{
         It "Should create a version number in the format of Draft.Revision.1 where 1 is the build number"{
             InModuleScope New-Manuscript {
-                Mock Get-UnstagedUntrackedChanges { "" }
                 Mock Get-SavedVersion {""}
 
                 New-Version ".\testdir" -Draft 1 -Revision 0 | Should -Be "1.0.1"
@@ -186,144 +185,127 @@ Describe 'New-Manuscript' {
         }
     }
 
-#     Context "When call to versioning is executed thrice"{
-#         It "Draft and Revision numbers should remain the same and the build number should increment" {
+    Context "When call to versioning is executed with existing version, no draft and revision specified"{
+        It "Draft and Revision numbers should remain the same and the build number should increment." {
 
-#             $Script:mockCounter = 0; 
-#             Mock Get-SavedVersion {
-#                 switch($Script:mockCounter){
-#                     0 { "" }
-#                     1 { "0.1.1" }
-#                     Default { "0.1.2" }
-#                 }
-#                 $Script:mockCounter++
-#             }
-            
-#             New-Version ".\testdir" | Should -Be "0.1.1"
-#             New-Version ".\testdir" | Should -Be "0.1.2"
-#             New-Version ".\testdir" | Should -Be "0.1.3"
-#         }
-#     }
+            InModuleScope New-Manuscript {
+                Mock Get-SavedVersion { "0.1.1" }   
 
-#     Context "When call to versioning is executed with specified draft number and revision number"{
-#         It "Draft and Revision numbers should remain the same and the build number should increment" {
+                New-Version ".\testdir" | Should -Be "0.1.2"
+            }
+        }
+    }
 
-#             $Script:mockCounter = 0; 
-#             Mock Get-SavedVersion {
-#                 switch($Script:mockCounter){
-#                     0 { "" }
-#                     1 { "1.1.1" }
-#                     Default { "1.1.2" }
-#                 }
-#                 $Script:mockCounter++
-#             }
-            
-#             New-Version ".\testdir" -Draft 1 -Revision 1 | Should -Be "1.1.1"
-#             New-Version ".\testdir" -Draft 1 -Revision 1 | Should -Be "1.1.2"
-#             New-Version ".\testdir" -Draft 1 -Revision 1 | Should -Be "1.1.3"
-#         }
-#     }
+    Context "When call to versioning is executed with specified draft number and revision number"{
+        It "Draft and Revision numbers should remain the same and the build number should increment" {
 
-#     Context "When revision number is incremented"{
-#         It "The build number should reset to 1" { 
+            InModuleScope New-Manuscript {
+                Mock Get-SavedVersion {"1.1.2" }     
 
-#             $Script:mockCounter = 0; 
-#             Mock Get-SavedVersion {
-#                 switch($Script:mockCounter){
-#                     0 { "" }
-#                     1 { "1.1.1" }
-#                     Default { "1.1.2" }
-#                 }
-#                 $Script:mockCounter++
-#             }
-            
-#             New-Version ".\testdir" -Draft 1 -Revision 1 | Should -Be "1.1.1"
-#             New-Version ".\testdir" -Draft 1 -Revision 1 | Should -Be "1.1.2"
-#             New-Version ".\testdir" -Draft 1 -Revision 2 | Should -Be "1.2.1"
-#         }
-#     }
+                New-Version ".\testdir" -Draft 1 -Revision 1 | Should -Be "1.1.3"
+            }
+        }
+    }
 
-#     Context "When call to versioning is executed only with Draft and Draft is greater than the previous draft number"{
-#         It "Should reset Revision to 1 and Build to 1" {
-#             $Script:mockCounter = 0; 
+    Context "When revision number is incremented"{
+        It "The build number should reset to 1" { 
 
-#             Mock Get-SavedVersion { "1.1.1" }                
+            InModuleScope New-Manuscript {
+                Mock Get-SavedVersion { "1.1.2" }
 
-#             New-Version ".\testdir" | Should -Be "1.1.2"
-#             New-Version ".\testdir" -Draft 2 | Should -Be "2.1.1"
-#         }
-#     }
+                New-Version ".\testdir" -Draft 1 -Revision 2 | Should -Be "1.2.1"
+            }
+        }
+     }
 
-#     Context "When call to versioning is executed with Draft and Revision, and Draft is greater than the previous draft number"{
-#         It "Should reset Revision to 1 and Build to 1, give a prompt where Y ignore the provided Revision in the script" {
-#             $Script:mockCounter = 0; 
+    Context "When call to versioning is executed only with Draft and Draft is greater than the previous draft number"{
+        It "Should reset Revision to 1 and Build to 1" {
+            InModuleScope New-Manuscript {
+                Mock Get-SavedVersion { "1.1.1" }                
 
-#             Mock Get-SavedVersion { "1.5.1" }                
-#             Mock Read-Host { "Y" }
+                New-Version ".\testdir" | Should -Be "1.1.2"
+                New-Version ".\testdir" -Draft 2 | Should -Be "2.1.1"
+            }
+        }
+    }
 
-#             $version = New-Version ".\testdir" -Draft 2 -Revision 6
+    Context "When call to versioning is executed with Draft and Revision, and Draft is greater than the previous draft number"{
+        It "Should reset Revision to 1 and Build to 1, give a prompt where Y ignore the provided Revision in the script" {
+           
+            InModuleScope New-Manuscript {
+                Mock Get-SavedVersion { "1.5.1" }                
+                Mock Read-Host { "Y" }
 
-#             Should -Invoke Read-Host -ParameterFilter { $Prompt -like "Draft and Revision*"}
-#             $version | Should -Be "2.1.1"
-#         }
-#     }
+                $version = New-Version ".\testdir" -Draft 2 -Revision 6
 
-#     Context "When call to versioning is executed with Draft and Revision, and Draft is greater than the previous draft number"{
-#         It "Should reset Revision to 1 and Build to 1, give a prompt where no would exit with no version" {
-#             $Script:mockCounter = 0; 
+                Should -Invoke Read-Host -ParameterFilter { $Prompt -like "Draft and Revision*"}
+                $version | Should -Be "2.1.1"
+            }
+        }
+    }
 
-#             Mock Get-SavedVersion { "1.5.1" }                
-#             Mock Read-Host { "N" }
+    Context "When call to versioning is executed with Draft and Revision, and Draft is greater than the previous draft number"{
+        It "Should reset Revision to 1 and Build to 1, give a prompt where no would exit with no version" {
 
-#             $version = New-Version ".\testdir" -Draft 2 -Revision 6
+            InModuleScope New-Manuscript {
+                Mock Get-SavedVersion { "1.5.1" }                
+                Mock Read-Host { "N" }
 
-#             Should -Invoke Read-Host -ParameterFilter { $Prompt -like "Draft and Revision*"}
-#             $version | Should -Be ""
-#         }
-#     }
+                $version = New-Version ".\testdir" -Draft 2 -Revision 6
 
-#     Context "When only a Revision is provided"{
-#         It "The draft number should not change" {
-#             $Script:mockCounter = 0; 
+                Should -Invoke Read-Host -ParameterFilter { $Prompt -like "Draft and Revision*"}
+                $version | Should -Be ""
+            }
+        }
+    }
 
-#             Mock Get-SavedVersion { "1.5.1" }                
-            
-#             $version = New-Version ".\testdir" -Revision 6
+    Context "When only a Revision is provided"{
+        It "The draft number should not change" {
 
-#             $version | Should -BeLike "1.6*"
-#         }
-#     }
+            InModuleScope New-Manuscript {
+                Mock Get-SavedVersion { "1.5.1" }                
+                
+                $version = New-Version ".\testdir" -Revision 6
 
-#     Context "When only a Revision is provided and it is greater than the previous revision"{
-#         It "The build number should reset" {
-#             $Script:mockCounter = 0; 
+                $version | Should -BeLike "1.6*"
+            }
+        }
+    }
 
-#             Mock Get-SavedVersion { "1.5.1" }
+    Context "When only a Revision is provided and it is greater than the previous revision"{
+        It "The build number should reset" {
+  
+            InModuleScope New-Manuscript {
+                Mock Get-SavedVersion { "1.5.1" }
 
-#             $version = New-Version ".\testdir" -Revision 6
+                $version = New-Version ".\testdir" -Revision 6
 
-#             $version | Should -BeLike "*6.1"
-#         }
-#     }
+                $version | Should -BeLike "*6.1"
+            }
+        }
+    }
 }
 
-# Describe "Get-SavedVersion" {
+Describe "Get-SavedVersion" {
 
-#     Context "When version data doesn't exist in the system" {
-#         It "Should return empty" {
+    Context "When version data doesn't exist in the system" {
+        It "Should return empty" {
+            InModuleScope New-Manuscript {
+                Mock Get-LatestVersionTag { $null }
 
-#             Mock Get-LatestVersionTag { $null }
+                Get-SavedVersion -InputDir ".\" | should -Be ""   
+            }         
+        }
+    }
 
-#             Get-SavedVersion -InputDir ".\" | should -Be ""            
-#         }
-#     }
+    Context "When version data exists in the system" {
+        It "Should return version" {
 
-#     Context "When version data exists in the system" {
-#         It "Should return version" {
+            InModuleScope New-Manuscript {
+                Mock Get-LatestVersionTag {"abcd tag    refs/tags/v1.0.0"}
 
-#             Mock Get-LatestVersionTag {"abcd tag    refs/tags/v1.0.0"}
-
-#             Get-SavedVersion -InputDir ".\" | should -Be "1.0.0"            
-#         }
-#     }
-# }
+                Get-SavedVersion -InputDir ".\" | should -Be "1.0.0"   
+            }         
+        }
+    }
+}
