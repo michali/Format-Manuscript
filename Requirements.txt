@@ -1,5 +1,0 @@
-Should only check for untracked changes inside the manuscript folder, other changes don't affect us
-
-
-Gitflow and semver for books
-
