@@ -101,7 +101,7 @@ function New-Version {
     return "$majorMinor.$buildNumber"
 }
 
-function Assert-StartOfChapter {
+function Assert-IsChapterHeading {
 	param(
 		[Parameter()]
 		[string] $filePath
@@ -181,14 +181,14 @@ function New-Manuscript{
         Write-Verbose "Processing $($manuscriptFiles[$i].FullName)..."
 
         if ($previousFile -ne '' `
-        -and !(Assert-StartOfChapter($manuscriptFiles[$i].FullName)) `
-        -and !(Assert-StartOfChapter($previousFile)))
+        -and !(Assert-IsChapterHeading($manuscriptFiles[$i].FullName)) `
+        -and !(Assert-IsChapterHeading($previousFile)))
         {       
             Write-Verbose "$($manuscriptFiles[$i].FullName) is the beginning of a new scene."
             $files.Add($sceneSeparatorFilePath)
         }  
 
-        if (Assert-StartOfChapter($manuscriptFiles[$i].FullName))
+        if (Assert-IsChapterHeading($manuscriptFiles[$i].FullName))
         {
             Write-Verbose "$($manuscriptFiles[$i].FullName) is the beginning of a new chapter."
         }   
