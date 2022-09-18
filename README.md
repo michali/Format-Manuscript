@@ -14,13 +14,13 @@ New-Manuscript -InputDir [-Draft] [-Revision] [-NoVersion]
 
 ## Description
 
--InputDir&#9;The path to the Git repository where the manuscript files reside
+`-InputDir`&#9;The path to the Git repository where the manuscript files reside
 
--Draft&#9;Manuscript's draft number
+`-Draft`&#9;Manuscript's draft number
 
--Revision&#9;Manuscript's revision number
+`-Revision`&#9;Manuscript's revision number
 
--NoVersion&#9;Do not create a manuscript version for this run
+`-NoVersion`&#9;Do not create a manuscript version for this run
 
 ## Overview
 `New-Manuscript` is a Powershell script that looks for markdown files in alphabetical order in a folder structure and compiles a Word or ODT document. The idea behind it is that there is a version-controlled manuscript in plain text format that evolves over time, and other tools can be applied on top of it and manipulate its format before it's ready for consumption. In essence, we're applying software version control to a repository that has the code to a book with only one developer involved.
@@ -149,4 +149,7 @@ Invoking the script will increment the build number of the version unless the `-
 ## Assumptions
 
 The chapter heading is in a file of its own.
-A separate markdown file denotes a scene. The script will inject a scene separator between scenes but not at the start and end of each chapter.
+
+A separate markdown file denotes a scene.
+
+The script will inject a scene separator between scenes but not at the start and end of each chapter.
