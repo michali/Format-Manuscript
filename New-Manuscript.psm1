@@ -22,7 +22,7 @@ function Get-SavedVersion {
     $version = Get-LatestVersionTag $InputDir
 
     if ($version) {
-        $mc = [regex]::matches($version, "v\d\.\d\.\d")
+        $mc = [regex]::matches($version, "v\d+\.\d+\.\d+")
         return $mc.groups[0].value.TrimStart("v")
     }
 
