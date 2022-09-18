@@ -120,7 +120,9 @@ A `config.json` file in the root of the script contains the following:
 ```
 
 `outputDirPart`:&#9;Path to the build output. Relative to the repository folder. This would typically be excluded from version control
+
 `manuscriptDirPart`:&#9;Path to the top folder with the manuscript files in the Git repository. Relative to the repository folder.
+
 `sceneSeparatorFilePath`:&#9;Path to the markdown file with the text that will act as separator between scenes. Relative to the repository folder.
 
 All three configuration elements are mandatory.
