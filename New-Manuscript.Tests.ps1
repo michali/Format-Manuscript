@@ -310,18 +310,30 @@ Describe "Get-SavedVersion" {
     }
 
     
-    InModuleScope New-Manuscript {
-        Context "Return version from tag" {
-            It "When the last git tag is <tag>, it should return version <expected>" -ForEach @(
-                @{ Tag = "v1.0.0"; Expected = "1.0.0"}
-                @{ Tag = "v1.1.10"; Expected = "1.1.10"}
-                @{ Tag = "v1.10.10"; Expected = "1.10.10"}
-                @{ Tag = "v10.10.10"; Expected = "10.10.10"}
-            ) {
-                    Mock Get-LatestVersionTag {"abcd tag    refs/tags/$Tag"}
 
-                    Get-SavedVersion -InputDir ".\" | should -Be $expected  
-            }         
+    Context "Return version from tag" {
+        It "Last git tag: v1.0.0, it should return 1.0.0" {
+            InModuleScope New-Manuscript {
+                Mock Get-LatestVersionTag {"abcd tag    refs/tags/v1.0.0"}
+
+                Get-SavedVersion -InputDir ".\" | should -Be "1.0.0"  
+            }     
         }
-    }
+        
+        It "Last git tag: v1.10.10, it should return 1.10.10" {
+            InModuleScope New-Manuscript {
+                Mock Get-LatestVersionTag {"abcd tag    refs/tags/v1.10.10"}
+
+                Get-SavedVersion -InputDir ".\" | should -Be "1.10.10"  
+            } 
+        }   
+
+        It "Last git tag: v10.10.101, it should return 10.10.101" {
+            InModuleScope New-Manuscript {
+                Mock Get-LatestVersionTag {"abcd tag    refs/tags/v10.10.101"}
+
+                Get-SavedVersion -InputDir ".\" | should -Be "10.10.101"  
+            }  
+        }  
+    }    
 }
