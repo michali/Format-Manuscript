@@ -140,7 +140,7 @@ The version number consists of three parts: Major.Minor.Build. It doesn't matter
 
 **Minor**: Revision number
 
-**Build**: Build number - increment with every script run unless the `-NoVersion` switch is specified
+Last is the **Build Number** - this increments with every script run unless a version cannot be generated (please see below).
 
 Incrementing the major number will reset the revision and build numbers to 1. Incrementing the revision number will reset the build number to 1. If both draft and revision are provided, then the rules around draft will be applied.
 
