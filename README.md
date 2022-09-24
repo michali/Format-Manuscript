@@ -23,7 +23,7 @@ New-Manuscript -InputDir [-Draft] [-Revision] [-NoVersion]
 `-NoVersion`&#9;Do not create a manuscript version for this run
 
 ## Overview
-`New-Manuscript` is a Powershell script that looks for markdown files in alphabetical order in a folder structure and compiles a Word document. The idea behind it is that there is a version-controlled manuscript in plain text format that evolves over time, and other tools can be applied on top of it and manipulate its format before it's ready for consumption. In essence, we're applying software version control to a repository that has the code to a book with only one developer involved.
+`New-Manuscript` is a Powershell script that looks for markdown files in alphabetical order in a folder structure and compiles a Word document. The idea behind it is that there is a version-controlled manuscript in plain text format that evolves over time, and other tools can be applied on top of it to manipulate its format before it's ready for consumption. In essence, we're applying software version control to a book.
 
 The script *can* be used for any type of document but it is intended for fiction and nonfiction books. Markdown is good for limited use cases, such as writing prose and even add inline images alongside text and. By extension, this script is not intended to support more complex document structures.
 
