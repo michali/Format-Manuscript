@@ -49,63 +49,63 @@ The folder structure doesn't need to follow a specific format as long as the fil
 └───_Manuscript
     ├───Act 1
     │   ├───Chapter 1
-    │   │       01.md
-    │   │       02.md
-    │   │       03.md
+    │   │       scene1.md
+    │   │       scene2.md
+    │   │       scene3.md
     │   │
     │   ├───Chapter 2
-    │   │       01.md
-    │   │       02.md
+    │   │       scene1.md
+    │   │       scene2.md
     │   │
     │   ├───Chapter 3
-    │   │       01.md
-    │   │       02.md
-    │   │       03.md
+    │   │       scene1.md
+    │   │       scene2.md
+    │   │       scene3.md
     │   │
     │   └───Chapter 4
-    │           01.md
+    │           scene1.md
     │
     ├───Act 2
     │   ├───Chapter 10
-    │   │       01.md
-    │   │       02.md
+    │   │       scene1.md
+    │   │       scene2.md
     │   │
     │   ├───Chapter 5
-    │   │       01.md
-    │   │       02.md
-    │   │       03.md
+    │   │       scene1.md
+    │   │       scene2.md
+    │   │       scene3.md
     │   │
     │   ├───Chapter 6
-    │   │       01.md
-    │   │       02.md
-    │   │       03.md
+    │   │       scene1.md
+    │   │       scene2.md
+    │   │       scene3.md
     │   │
     │   ├───Chapter 7
-    │   │       01.md
+    │   │       scene1.md
     │   │
     │   ├───Chapter 8
-    │   │       01.md
-    │   │       02.md
-    │   │       03.md
+    │   │       scene1.md
+    │   │       scene2.md
+    │   │       scene3.md
     │   │
     │   └───Chapter 9
-    │           01.md
-    │           02.md
+    │           scene1.md
+    │           scene2.md
     │
     └───Act 3
         ├───Chapter 11
-        │       01.md
+        │       scene1.md
         │
         ├───Chapter 12
-        │       01.md
+        │       scene1.md
         │
         ├───Chapter 13
-        │       01.md
-        │       02.md
-        │       03.md
+        │       scene1.md
+        │       scene2.md
+        │       scene3.md
         │
         └───Chapter 14
-                01.md
+                scene1.md
 ```
 
 ## Configuration
