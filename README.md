@@ -23,7 +23,7 @@ New-Manuscript -InputDir [-Draft] [-Revision] [-NoVersion]
 `-NoVersion`&#9;Do not create a manuscript version for this run
 
 ## Overview
-`New-Manuscript` is a Powershell script that looks for markdown files in alphabetical order in a folder structure and compiles a Word document. The idea behind it is that there is a version-controlled manuscript in plain text format that evolves over time, and other tools can be applied on top of it and manipulate its format before it's ready for consumption. In essence, we're applying software version control to a repository that has the code to a book with only one developer involved.
+`New-Manuscript` is a Powershell script that looks for markdown files in alphabetical order in a folder structure and compiles a Word document. The idea behind it is that there is a version-controlled manuscript in plain text format that evolves over time, and other tools can be applied on top of it to manipulate its format before it's ready for consumption. In essence, we're applying software version control to a book.
 
 The script *can* be used for any type of document but it is intended for fiction and nonfiction books. Markdown is good for limited use cases, such as writing prose and even add inline images alongside text and. By extension, this script is not intended to support more complex document structures.
 
@@ -49,63 +49,63 @@ The folder structure doesn't need to follow a specific format as long as the fil
 └───_Manuscript
     ├───Act 1
     │   ├───Chapter 1
-    │   │       01.md
-    │   │       02.md
-    │   │       03.md
+    │   │       scene1.md
+    │   │       scene2.md
+    │   │       scene3.md
     │   │
     │   ├───Chapter 2
-    │   │       01.md
-    │   │       02.md
+    │   │       scene1.md
+    │   │       scene2.md
     │   │
     │   ├───Chapter 3
-    │   │       01.md
-    │   │       02.md
-    │   │       03.md
+    │   │       scene1.md
+    │   │       scene2.md
+    │   │       scene3.md
     │   │
     │   └───Chapter 4
-    │           01.md
+    │           scene1.md
     │
     ├───Act 2
     │   ├───Chapter 10
-    │   │       01.md
-    │   │       02.md
+    │   │       scene1.md
+    │   │       scene2.md
     │   │
     │   ├───Chapter 5
-    │   │       01.md
-    │   │       02.md
-    │   │       03.md
+    │   │       scene1.md
+    │   │       scene2.md
+    │   │       scene3.md
     │   │
     │   ├───Chapter 6
-    │   │       01.md
-    │   │       02.md
-    │   │       03.md
+    │   │       scene1.md
+    │   │       scene2.md
+    │   │       scene3.md
     │   │
     │   ├───Chapter 7
-    │   │       01.md
+    │   │       scene1.md
     │   │
     │   ├───Chapter 8
-    │   │       01.md
-    │   │       02.md
-    │   │       03.md
+    │   │       scene1.md
+    │   │       scene2.md
+    │   │       scene3.md
     │   │
     │   └───Chapter 9
-    │           01.md
-    │           02.md
+    │           scene1.md
+    │           scene2.md
     │
     └───Act 3
         ├───Chapter 11
-        │       01.md
+        │       scene1.md
         │
         ├───Chapter 12
-        │       01.md
+        │       scene1.md
         │
         ├───Chapter 13
-        │       01.md
-        │       02.md
-        │       03.md
+        │       scene1.md
+        │       scene2.md
+        │       scene3.md
         │
         └───Chapter 14
-                01.md
+                scene1.md
 ```
 
 ## Configuration
@@ -140,7 +140,7 @@ The version number consists of three parts: Major.Minor.Build. It doesn't matter
 
 **Minor**: Revision number
 
-**Build**: Build number - increment with every script run unless the `-NoVersion` switch is specified
+Last is the **Build Number** - this increments with every script run unless a version cannot be generated (please see below).
 
 Incrementing the major number will reset the revision and build numbers to 1. Incrementing the revision number will reset the build number to 1. If both draft and revision are provided, then the rules around draft will be applied.
 
