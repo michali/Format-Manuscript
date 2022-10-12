@@ -6,6 +6,6 @@ param(
     [switch]$NoVersion
 )
 
-Import-Module -Name .\New-Manuscript
+Import-Module -Name $PSScriptRoot\New-Manuscript
 
 New-Manuscript -InputDir $InputDir -Draft $Draft -Revision $Revision -NoVersion:$NoVersion
