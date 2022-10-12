@@ -1,5 +1,5 @@
 # New-Manuscript
-## Create a Word document from a collection of Markdown files
+## Compile a prose document from a collection of markdown files
 
 ## Disclaimer
 This code is provided "as is" without warranty of any kind, either express or implied, including any implied warranties of fitness for a particular purpose, merchantability, or non-infringement.
