@@ -66,10 +66,7 @@ The folder structure doesn't need to follow a specific format as long as the fil
     │           scene1.md
     │
     ├───Act 2
-    │   ├───Chapter 10
-    │   │       scene1.md
-    │   │       scene2.md
-    │   │
+    │   │ 
     │   ├───Chapter 5
     │   │       scene1.md
     │   │       scene2.md
@@ -93,18 +90,18 @@ The folder structure doesn't need to follow a specific format as long as the fil
     │           scene2.md
     │
     └───Act 3
+        ├───Chapter 10
+        │       scene1.md
+        │
         ├───Chapter 11
         │       scene1.md
         │
         ├───Chapter 12
         │       scene1.md
-        │
-        ├───Chapter 13
-        │       scene1.md
         │       scene2.md
         │       scene3.md
         │
-        └───Chapter 14
+        └───Chapter 13
                 scene1.md
 ```
 
