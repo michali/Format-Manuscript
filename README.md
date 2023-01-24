@@ -37,7 +37,9 @@ The script *can* be used for any type of document but it is intended for fiction
 
 ## New scenes and chapters
 
-Typically a chapter starts with a heading style and the script assumes that this is Heading 1 (a markdown file starts with one hash symbol and a space). To insert page breaks between chapters, create a pandoc reference document and modify the heading style that you would like to start a chapter with so that a page break is inserted before the style is applied. This can be done in Word and in LibreOffice Writer.
+The start of a new chapter has to be marked with a Heading 1 markdown style (one hash character and a space).
+
+To insert page breaks between chapters, create a pandoc reference document and modify the heading style that you would like to start a chapter with so that a page break is inserted before the style is applied. This can be done in Word and in LibreOffice Writer.
 
 If a chapter has multiple scenes, the script will insert a scene separator between them. This is a visual marker in a novel to denote that a new scene starts below, and it is usually a small picture or one to three asterisk characters.
 
@@ -137,7 +139,7 @@ The version number consists of three parts: Major.Minor.Build. It doesn't matter
 
 **Minor**: Revision number
 
-Last is the **Build Number** - this increments with every script run unless a version cannot be generated (please see below).
+Last is the **Build Number** - this increments with every script run unless a version cannot be generated (please see below) or when incrementing the major or minor version numbers, in which case the build number is reset.
 
 Incrementing the major number will reset the revision and build numbers to 1. Incrementing the revision number will reset the build number to 1. If both draft and revision are provided, then the rules around draft will be applied.
 
