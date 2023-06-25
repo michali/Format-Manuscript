@@ -7,7 +7,7 @@ BeforeAll {
     Mock -ModuleName New-Manuscript Test-Path { $true }
     Mock -ModuleName New-Manuscript Write-Output { }
     Mock -ModuleName New-Manuscript Get-Content {""}
-    Mock -ModuleName New-Manuscript Write-Warning
+    Mock -ModuleName New-Manuscript Write-Warning { }
     Mock -ModuleName New-Manuscript Get-Content -ParameterFilter {$Path -eq "$PSScriptRoot\config.json"} { "{""outputDirPart"": ""out"", ""manuscriptDirPart"": ""_Manuscript"", ""sceneSeparatorFilePath"": ""Templates\\Scene separator.md""}" }
 }
 
@@ -43,6 +43,17 @@ Describe 'New-Manuscript' {
     
             {.\New-Manuscript.ps1 $inputDir} | Should -Throw      
          }
+    }
+    
+
+    Context "When the script does not run within a source control repository"{
+        It "Should issue a warning" {
+            Mock -ModuleName New-Manuscript Test-Path -ParameterFilter { $Path -eq ".\.git" }  { $false }
+            
+            .\New-Manuscript.ps1 ".\testdir"
+
+            Should -Invoke -CommandName Write-Warning -ModuleName New-Manuscript -ParameterFilter { $Message -eq "No git repository exists in the project folder. Document will be generated unversioned." }
+        }
     }
 
     Context "When Checking the manuscript files" {
@@ -133,7 +144,7 @@ Describe 'New-Manuscript' {
 
             Should -Invoke -CommandName Save-Version -ModuleName New-Manuscript -ParameterFilter {$InputDir -eq ".\testdir" -and $Version -eq "1.0.0" }
         }
-    } 
+    }
 }
 
  Describe "Versioning" {  
@@ -307,9 +318,7 @@ Describe "Get-SavedVersion" {
                 Get-SavedVersion -InputDir ".\" | should -Be "1.0.0"   
             }         
         }
-    }
-
-    
+    }    
 
     Context "Return version from tag" {
         It "Last git tag: v1.0.0, it should return 1.0.0" {
