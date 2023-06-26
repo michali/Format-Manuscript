@@ -198,12 +198,14 @@ function New-Manuscript{
     }
 
     $suffix = ''
-    
-    If (!(Test-Path ".\.git")){        
+    $isSourceControlled = $true
+
+    If (!(Test-Path ".\.git") -And !(Test-Path "..\.git")) {      
         Write-Warning "No git repository exists in the project folder. Document will be generated unversioned."
+        $isSourceControlled = $false
     }
 
-    if ($NoVersion -eq $false){
+    if ($NoVersion -eq $false -And $isSourceControlled -eq $true){
         $version = New-Version -InputDir $InputDir -Draft $Draft -Revision $Revision
         
         if ($version -ne ""){

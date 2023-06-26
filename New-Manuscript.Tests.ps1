@@ -43,18 +43,7 @@ Describe 'New-Manuscript' {
     
             {.\New-Manuscript.ps1 $inputDir} | Should -Throw      
          }
-    }
-    
-
-    Context "When the script does not run within a source control repository"{
-        It "Should issue a warning" {
-            Mock -ModuleName New-Manuscript Test-Path -ParameterFilter { $Path -eq ".\.git" }  { $false }
-            
-            .\New-Manuscript.ps1 ".\testdir"
-
-            Should -Invoke -CommandName Write-Warning -ModuleName New-Manuscript -ParameterFilter { $Message -eq "No git repository exists in the project folder. Document will be generated unversioned." }
-        }
-    }
+    }  
 
     Context "When Checking the manuscript files" {
         
@@ -103,6 +92,41 @@ Describe 'New-Manuscript' {
             Should -Invoke -CommandName Invoke-Pandoc -ModuleName New-Manuscript -ParameterFilter { $outputFilePath -eq "$inputDir\out\testdir.docx" }
         }
     }   
+
+     
+    Context "When the input dir isn't the root folder of a source control repository and the folder above it also isn't"{
+        It "Should issue a warning" {
+            Mock -ModuleName New-Manuscript Test-Path -ParameterFilter { $Path -eq ".\.git" }  { $false }
+            Mock -ModuleName New-Manuscript Test-Path -ParameterFilter { $Path -eq "..\.git" }  { $false }
+            
+            .\New-Manuscript.ps1 ".\testdir"
+
+            Should -Invoke -CommandName Write-Warning -ModuleName New-Manuscript -ParameterFilter { $Message -eq "No git repository exists in the project folder. Document will be generated unversioned." }
+        }
+    }
+
+    Context "When the input dir isn't the root folder of a source control repository but the folder above is"{
+        It "Should not issue a warning" {
+            Mock -ModuleName New-Manuscript Test-Path -ParameterFilter { $Path -eq ".\.git" }  { $false }
+            Mock -ModuleName New-Manuscript Test-Path -ParameterFilter { $Path -eq "..\.git" }  { $true }
+            
+            .\New-Manuscript.ps1 ".\testdir"
+
+            Should -Not -Invoke -CommandName Write-Warning -ModuleName New-Manuscript -ParameterFilter { $Message -eq "No git repository exists in the project folder. Document will be generated unversioned." }
+        }
+    }
+
+    Context "No source control repository is detected"{
+        It "Should not attempt to version the generated document"{
+            Mock -ModuleName New-Manuscript Test-Path -ParameterFilter { $Path -eq ".\.git" }  { $false }
+            Mock -ModuleName New-Manuscript Test-Path -ParameterFilter { $Path -eq "..\.git" }  { $false }
+            
+            .\New-Manuscript.ps1 ".\testdir"
+
+            Should -Not -Invoke -CommandName New-Version -ModuleName New-Manuscript
+            Should -Not -Invoke -CommandName Save-Version -ModuleName New-Manuscript
+        }
+    }
         
     Context "When a version is created" {
 
